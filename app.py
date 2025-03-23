@@ -114,7 +114,7 @@ content = html.Div(id="page-content", className="content")
 
 # Layout général de l'application
 app.layout = html.Div([
-    dcc.Location(id="url"),
+    dcc.Location(id='url', refresh=False),
     sidebar,
     content
 ])
