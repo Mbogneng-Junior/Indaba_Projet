@@ -22,7 +22,7 @@ from callbacks.eligibility_prediction_callbacks import init_eligibility_predicti
 app = dash.Dash(
     __name__,
     external_stylesheets=[
-        dbc.themes.FLATLY,  
+        dbc.themes.BOOTSTRAP,  
         "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"  
     ],
     suppress_callback_exceptions=True

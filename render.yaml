@@ -7,16 +7,16 @@ services:
     startCommand: cd ml_api && gunicorn api:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
-        value: 3.12.0
+        value: 3.11.0
 
   # Service Dashboard
   - type: web
     name: blood-donation-dashboard
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:server -b 0.0.0.0:$PORT
+    startCommand: gunicorn app:server -b 0.0.0.0:$PORT -w 4
     envVars:
       - key: PYTHON_VERSION
-        value: 3.12.0
+        value: 3.11.0
       - key: API_URL
         value: https://blood-donation-api.onrender.com
