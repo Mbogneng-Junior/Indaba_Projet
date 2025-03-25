@@ -70,15 +70,15 @@ def init_health_analysis_callbacks(app):
             detailed_stats = html.Div([
                 dbc.Row([
                     dbc.Col([
-                        html.H4("Donneurs éligible", className="h6"),
+                        html.H4("Éligible", className="h6"),
                         html.P(f"{str(eligible)} ({pct_eligible:.1f}%)", className="h3 text-primary")
                     ], width=4),
                     dbc.Col([
-                        html.H4("temporairement non disponible", className="h6"),
+                        html.H4("Temporairement Non-éligible", className="h6"),
                         html.P(f"{str(temp_unavailable)} ({pct_temp:.1f}%)", className="h3 text-danger")
                     ], width=4),
                     dbc.Col([
-                        html.H4("Non eligible", className="h6"),
+                        html.H4("Définitivement Non-éligible", className="h6"),
                         html.P(f"{str(non_eligible)} ({pct_non:.1f}%)", className="h3 text-warning")
                     ], width=4)
                 ])

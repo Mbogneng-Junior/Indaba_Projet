@@ -30,7 +30,7 @@ def create_sidebar():
                     dbc.NavLink(
                         [
                             html.I(className="fas fa-chart-bar me-2"),
-                            "Analyse Campagnes"
+                            "Analyse Efficacité"
                         ],
                         href="/analyse-campagnes",
                         active="exact",
@@ -39,7 +39,7 @@ def create_sidebar():
                     dbc.NavLink(
                         [
                             html.I(className="fas fa-heartbeat me-2"),
-                            "Analyse Sant "
+                            "Conditions Santé"
                         ],
                         href="/analyse-sante",
                         active="exact",
@@ -57,7 +57,7 @@ def create_sidebar():
                     dbc.NavLink(
                         [
                             html.I(className="fas fa-sync me-2"),
-                            "Rétention Donneurs"
+                            "Fidélisation Donneurs"
                         ],
                         href="/retention",
                         active="exact",
