@@ -54,6 +54,15 @@ def create_sidebar():
                         active="exact",
                         className="nav-link"
                     ),
+                    dbc.NavLink(
+                        [
+                            html.I(className="fas fa-comments me-2"),
+                            "Analyse Feedback"
+                        ],
+                        href="/feedback",
+                        active="exact",
+                        className="nav-link"
+                    ),
                 ],
                 vertical=True,
                 pills=True,

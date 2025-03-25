@@ -266,7 +266,9 @@ def init_donor_profiles_callbacks(app):
                     y=0.99,
                     xanchor="right",
                     x=0.99
-                )
+                ),
+                xaxis=dict(range=[-5, 20]),
+                yaxis=dict(range=[-5, 20])
             )
             
             # Analyser les caractéristiques des clusters
