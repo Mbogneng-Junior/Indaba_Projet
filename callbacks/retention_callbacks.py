@@ -1,29 +1,20 @@
+from dash import html
 from dash.dependencies import Input, Output
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
 from datetime import datetime
-import dash_bootstrap_components as dbc
-from dash import html
 
-def init_donor_retention_callbacks(app):
-    """Initialise les callbacks pour l'analyse de la fidélisation des donneurs"""
+def init_retention_callbacks(app):
+    """Initialise les callbacks pour la page de rétention"""
     
     def load_data():
         """Charge et prépare les données"""
         df = pd.read_csv('data/processed_data.csv')
         df['date_de_remplissage'] = pd.to_datetime(df['date_de_remplissage'])
-        
-        # Nettoyage des données de don antérieur
-        df['a_t_il_elle_deja_donne_le_sang'] = df['a_t_il_elle_deja_donne_le_sang'].str.lower()
-        
-        # Conversion de la date du dernier don
-        df['si_oui_preciser_la_date_du_dernier_don'] = pd.to_datetime(
-            df['si_oui_preciser_la_date_du_dernier_don'],
-            errors='coerce'
-        )
-        
+        if 'si_oui_preciser_la_date_du_dernier_don' in df.columns:
+            df['si_oui_preciser_la_date_du_dernier_don'] = pd.to_datetime(df['si_oui_preciser_la_date_du_dernier_don'])
         return df
     
     @app.callback(
@@ -54,20 +45,21 @@ def init_donor_retention_callbacks(app):
             retention_rate = (returning_donors / total_donors * 100) if total_donors > 0 else 0
             
             stats = html.Div([
-                dbc.Row([
-                    dbc.Col([
-                        html.H4("Donneurs totaux", className="h6"),
-                        html.P(f"{total_donors:,}", className="h3 text-primary")
-                    ], width=4),
-                    dbc.Col([
-                        html.H4("Donneurs réguliers", className="h6"),
-                        html.P(f"{returning_donors:,}", className="h3 text-success")
-                    ], width=4),
-                    dbc.Col([
-                        html.H4("Taux de rétention", className="h6"),
-                        html.P(f"{retention_rate:.1f}%", className="h3 text-info")
-                    ], width=4)
-                ])
+                html.H4("Statistiques de rétention", className="mb-4"),
+                html.Div([
+                    html.Div([
+                        html.H6("Donneurs totaux"),
+                        html.P(f"{total_donors:,}", className="h3")
+                    ], className="stat-box"),
+                    html.Div([
+                        html.H6("Donneurs réguliers"),
+                        html.P(f"{returning_donors:,}", className="h3")
+                    ], className="stat-box"),
+                    html.Div([
+                        html.H6("Taux de rétention"),
+                        html.P(f"{retention_rate:.1f}%", className="h3")
+                    ], className="stat-box")
+                ], className="stats-container")
             ])
             
             # 2. Tendance de rétention
@@ -90,8 +82,6 @@ def init_donor_retention_callbacks(app):
             
             # 3. Fréquence des dons
             donor_frequency = df[df['a_t_il_elle_deja_donne_le_sang'] == 'oui'].copy()
-            
-            # Calculer l'intervalle entre les dons
             donor_frequency['temps_depuis_dernier_don'] = (
                 donor_frequency['date_de_remplissage'] - 
                 donor_frequency['si_oui_preciser_la_date_du_dernier_don']
@@ -123,16 +113,9 @@ def init_donor_retention_callbacks(app):
             freq_fig.update_layout(showlegend=False)
             
             # 4. Rétention par âge
-            df['age_group'] = pd.qcut(
-                df['age'].fillna(df['age'].mean()),
-                q=5,
-                labels=['18-25', '26-35', '36-45', '46-55', '56+']
-            )
-            
-            age_retention = df.groupby('age_group').agg({
+            age_retention = df.groupby(pd.qcut(df['age'], q=5)).agg({
                 'a_t_il_elle_deja_donne_le_sang': lambda x: (x == 'oui').mean() * 100
             }).reset_index()
-            
             age_retention.columns = ['Tranche d\'âge', 'Taux de rétention']
             
             age_fig = px.bar(
@@ -149,14 +132,8 @@ def init_donor_retention_callbacks(app):
             location_retention = df.groupby('arrondissement_de_residence').agg({
                 'a_t_il_elle_deja_donne_le_sang': lambda x: (x == 'oui').mean() * 100
             }).reset_index()
-            
             location_retention.columns = ['Zone', 'Taux de rétention']
             location_retention = location_retention.sort_values('Taux de rétention', ascending=True)
-            
-            # Exclure les valeurs non précisées
-            location_retention = location_retention[
-                ~location_retention['Zone'].str.contains('pas précisé', case=False, na=False)
-            ]
             
             location_fig = px.bar(
                 location_retention,

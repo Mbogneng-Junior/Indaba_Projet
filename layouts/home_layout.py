@@ -194,14 +194,43 @@ def create_home_layout():
                             html.Iframe(
                                 id='donor-map',
                                 srcDoc='',
-                                className='map-frame'
+                                style={
+                                    'width': '100%',
+                                    'height': '500px',
+                                    'border': 'none'
+                                }
                             )
                         ], className="p-0")
                     ], className="map-card")
                 ], width=12, lg=9),
             ], className="mb-4"),
             
-            # Section des statistiques détaillées
+            # Nouvelle section pour les graphiques de statistiques
+            dbc.Row([
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardBody([
+                            dcc.Graph(
+                                id="donor-stats-graph",
+                                config={'displayModeBar': False}
+                            )
+                        ])
+                    ], className="graph-card mb-4")
+                ], width=12, lg=6),
+                
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardBody([
+                            dcc.Graph(
+                                id="donor-geo-distribution",
+                                config={'displayModeBar': False}
+                            )
+                        ])
+                    ], className="graph-card mb-4")
+                ], width=12, lg=6)
+            ]),
+            
+            # Section des statistiques régionales
             dbc.Row([
                 dbc.Col([
                     dbc.Card([

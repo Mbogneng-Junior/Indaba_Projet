@@ -40,7 +40,7 @@ def init_health_analysis_callbacks(app):
         try:
             df = load_data()
             
-            # Définir toutes les colonnes nécessaires au début
+            # Définir les colonnes pour chaque catégorie
             health_cols = [col for col in df.columns if 'raison_de_non-eligibilité_totale__' in col]
             temp_unavail_cols = [col for col in df.columns if 'raison_indisponibilité__' in col]
             raisons_femmes = [col for col in df.columns if "raison_de_l'indisponibilité_de_la_femme_" in col]
@@ -52,9 +52,6 @@ def init_health_analysis_callbacks(app):
                 df = df[df['date_de_remplissage'].dt.date >= pd.to_datetime(start_date).date()]
             if end_date:
                 df = df[df['date_de_remplissage'].dt.date <= pd.to_datetime(end_date).date()]
-            
-            # Palette de couleurs
-            color_scale = ['#8B0000', '#000000']
             
             # 1. Statistiques détaillées
             total = len(df)
@@ -70,145 +67,143 @@ def init_health_analysis_callbacks(app):
             detailed_stats = html.Div([
                 dbc.Row([
                     dbc.Col([
-                        html.H4("Donneurs éligible", className="h6"),
-                        html.P(f"{str(eligible)} ({pct_eligible:.1f}%)", className="h3 text-primary")
+                        html.H4("Donneurs éligibles", className="h6"),
+                        html.P(f"{eligible} ({pct_eligible:.1f}%)", className="h3 text-primary")
                     ], width=4),
                     dbc.Col([
-                        html.H4("temporairement non disponible", className="h6"),
-                        html.P(f"{str(temp_unavailable)} ({pct_temp:.1f}%)", className="h3 text-danger")
+                        html.H4("Temporairement non disponible", className="h6"),
+                        html.P(f"{temp_unavailable} ({pct_temp:.1f}%)", className="h3 text-danger")
                     ], width=4),
                     dbc.Col([
-                        html.H4("Non eligible", className="h6"),
-                        html.P(f"{str(non_eligible)} ({pct_non:.1f}%)", className="h3 text-warning")
+                        html.H4("Non éligibles", className="h6"),
+                        html.P(f"{non_eligible} ({pct_non:.1f}%)", className="h3 text-warning")
                     ], width=4)
                 ])
             ])
             
-            # Le reste du code reste identique...
-            
-            # 2. Top 3 des problèmes de santé
+            # 2. Top problèmes de santé
             health_issues = []
             for col in health_cols:
-                count = df[col].map({'oui': 1, 'non': 0}).sum()
+                count = (df[col] == 'oui').sum()
                 if count > 0:
                     issue = col.split('__')[-1].replace('[', '').replace(']', '').replace('_', ' ')
                     health_issues.append({'issue': issue, 'count': count})
             
-            health_issues = sorted(health_issues, key=lambda x: x['count'], reverse=True)[:3]
             health_df = pd.DataFrame(health_issues)
+            if not health_df.empty:
+                health_df = health_df.sort_values('count', ascending=False)
+                
+                top_health_fig = px.bar(
+                    health_df,
+                    x='issue',
+                    y='count',
+                    title="Principaux problèmes de santé",
+                    labels={'issue': 'Problème de santé', 'count': 'Nombre de cas'},
+                    color='count',
+                    color_continuous_scale=['#8B0000', '#000000']
+                )
+                top_health_fig.update_layout(
+                    showlegend=False,
+                    xaxis_tickangle=-45,
+                    margin=dict(l=0, r=0, t=40, b=100),
+                    height=400
+                )
+            else:
+                top_health_fig = go.Figure()
             
-            top_health_fig = px.bar(
-                health_df,
-                x='issue',
-                y='count',
-                title="Top 3 des problèmes de santé",
-                color='count',
-                color_continuous_scale=color_scale
-            )
-            top_health_fig.update_layout(
-                showlegend=False,
-                margin=dict(l=0, r=0, t=40, b=100),
-                xaxis_title="",
-                yaxis_title="Nombre de cas",
-                coloraxis_showscale=False,
-                xaxis_tickangle=-45,
-                height=400
-            )
-            
-            # 3. Top 3 des raisons d'indisponibilité
+            # 3. Top raisons d'indisponibilité
             unavail_reasons = []
-            for col in temp_unavail_cols:
-                count = df[col].map({'oui': 1, 'non': 0}).sum()
+            for col in temp_unavail_cols + raisons_femmes:
+                count = (df[col] == 'oui').sum()
                 if count > 0:
                     reason = col.split('__')[-1].replace('[', '').replace(']', '').replace('_', ' ')
                     unavail_reasons.append({'reason': reason, 'count': count})
             
-            unavail_reasons = sorted(unavail_reasons, key=lambda x: x['count'], reverse=True)[:3]
             unavail_df = pd.DataFrame(unavail_reasons)
+            if not unavail_df.empty:
+                unavail_df = unavail_df.sort_values('count', ascending=False)
+                
+                top_unavail_fig = px.bar(
+                    unavail_df,
+                    x='reason',
+                    y='count',
+                    title="Principales raisons d'indisponibilité",
+                    labels={'reason': 'Raison', 'count': 'Nombre de cas'},
+                    color='count',
+                    color_continuous_scale=['#8B0000', '#000000']
+                )
+                top_unavail_fig.update_layout(
+                    showlegend=False,
+                    xaxis_tickangle=-45,
+                    margin=dict(l=0, r=0, t=40, b=100),
+                    height=400
+                )
+            else:
+                top_unavail_fig = go.Figure()
             
-            top_unavail_fig = px.bar(
-                unavail_df,
-                x='reason',
-                y='count',
-                title="Top 3 des raisons d'indisponibilité",
-                color='count',
-                color_continuous_scale=color_scale
-            )
-            top_unavail_fig.update_layout(
-                showlegend=False,
-                margin=dict(l=0, r=0, t=40, b=100),
-                xaxis_title="",
-                yaxis_title="Nombre de cas",
-                coloraxis_showscale=False,
-                xaxis_tickangle=-45,
-                height=400
-            )
-            
-            # 4. Raisons d'indisponibilité temporaire
+            # 4. Graphique d'indisponibilité temporaire
             temp_fig = px.bar(
                 unavail_df,
                 x='count',
                 y='reason',
                 orientation='h',
                 title="Raisons d'indisponibilité temporaire",
+                labels={'reason': 'Raison', 'count': 'Nombre de cas'},
                 color='count',
-                color_continuous_scale=color_scale
+                color_continuous_scale=['#8B0000', '#000000']
             )
             temp_fig.update_layout(
-                template='plotly_white',
                 showlegend=False,
                 margin=dict(l=0, r=0, t=40, b=0),
-                yaxis_title="",
-                xaxis_title="Nombre de cas",
-                coloraxis_showscale=False
-            )
-            
-            # 5. Analyse par zone géographique
-            geo_health = df.groupby('arrondissement_de_residence').agg({
-                'eligibilite_au_don': lambda x: (x == 'ineligible').sum()
-            }).reset_index()
-            
-            # Nettoyer et standardiser les noms d'arrondissements
-            geo_health['arrondissement_de_residence'] = geo_health['arrondissement_de_residence'].apply(
-                lambda x: x.strip().lower() if isinstance(x, str) else x
-            )
-            geo_health = geo_health[~geo_health['arrondissement_de_residence'].str.contains('pas précisé', na=False)]
-            
-            geo_fig = px.bar(
-                geo_health,
-                x='arrondissement_de_residence',
-                y='eligibilite_au_don',
-                title="Nombre de cas d'inéligibilité par zone",
-                color='eligibilite_au_don',
-                color_continuous_scale=color_scale
-            )
-            geo_fig.update_layout(
-                template='plotly_white',
-                xaxis_title="Arrondissement",
-                yaxis_title="Nombre de cas d'inéligibilité",
-                xaxis_tickangle=-45,
-                margin=dict(l=0, r=0, t=40, b=100),
-                coloraxis_showscale=False,
                 height=400
             )
             
-            # 6. Graphique des problèmes de santé
+            # 5. Analyse géographique
+            geo_stats = df.groupby('arrondissement_de_residence').agg({
+                'eligibilite_au_don': lambda x: (x != 'eligible').sum(),
+                'date_de_remplissage': 'count'
+            }).reset_index()
+            
+            geo_stats.columns = ['arrondissement', 'non_eligible', 'total']
+            geo_stats['pourcentage'] = (geo_stats['non_eligible'] / geo_stats['total'] * 100).round(1)
+            geo_stats = geo_stats.sort_values('non_eligible', ascending=True)
+            
+            # Exclure les valeurs non précisées
+            geo_stats = geo_stats[~geo_stats['arrondissement'].str.contains('pas précisé', case=False, na=False)]
+            
+            geo_fig = px.bar(
+                geo_stats,
+                x='non_eligible',
+                y='arrondissement',
+                orientation='h',
+                title="Cas d'inéligibilité par zone",
+                text=geo_stats['pourcentage'].apply(lambda x: f'{x}%'),
+                color='non_eligible',
+                color_continuous_scale=['#8B0000', '#000000']
+            )
+            geo_fig.update_layout(
+                showlegend=False,
+                margin=dict(l=0, r=0, t=40, b=0),
+                height=400,
+                xaxis_title="Nombre de cas",
+                yaxis_title="Arrondissement"
+            )
+            
+            # 6. Graphique détaillé des problèmes de santé
             health_fig = px.bar(
                 health_df,
                 x='count',
                 y='issue',
                 orientation='h',
-                title="Problèmes de santé majeurs",
+                title="Détail des problèmes de santé",
+                labels={'issue': 'Problème', 'count': 'Nombre de cas'},
                 color='count',
-                color_continuous_scale=color_scale
+                color_continuous_scale=['#8B0000', '#000000']
             )
             health_fig.update_layout(
-                template='plotly_white',
                 showlegend=False,
                 margin=dict(l=0, r=0, t=40, b=0),
-                yaxis_title="",
-                xaxis_title="Nombre de cas",
-                coloraxis_showscale=False
+                height=400
             )
             
             # 7. Tableau d'interprétation
@@ -218,23 +213,23 @@ def init_health_analysis_callbacks(app):
                         html.Th("Catégorie"),
                         html.Th("Observations"),
                         html.Th("Implications")
-                    ], className="table-dark")
+                    ])
                 ]),
                 html.Tbody([
                     html.Tr([
-                        html.Td("Problèmes de santé majeurs"),
-                        html.Td(f"Le problème principal est {health_issues[0]['issue']} avec {health_issues[0]['count']} cas"),
-                        html.Td("Nécessite une attention particulière dans le processus de sélection")
+                        html.Td("Éligibilité"),
+                        html.Td(f"{pct_eligible:.1f}% de donneurs éligibles"),
+                        html.Td("Base de donneurs potentiels")
                     ]),
                     html.Tr([
                         html.Td("Indisponibilité temporaire"),
-                        html.Td(f"Principale raison : {unavail_reasons[0]['reason']} ({unavail_reasons[0]['count']} cas)"),
-                        html.Td("Suggère des actions de sensibilisation ciblées")
+                        html.Td(f"{pct_temp:.1f}% temporairement indisponibles"),
+                        html.Td("Potentiel de retour futur")
                     ]),
                     html.Tr([
-                        html.Td("Distribution géographique"),
-                        html.Td(f"Zones avec taux d'inéligibilité élevé identifiées"),
-                        html.Td("Permet de cibler les interventions par zone")
+                        html.Td("Non éligibilité"),
+                        html.Td(f"{pct_non:.1f}% non éligibles"),
+                        html.Td("Nécessite un suivi médical")
                     ])
                 ])
             ], bordered=True, hover=True)
@@ -261,11 +256,11 @@ def init_health_analysis_callbacks(app):
                 showarrow=False
             )
             return (
-                "Erreur",
+                html.Div("Erreur lors du chargement des statistiques"),
                 empty_fig,
                 empty_fig,
                 empty_fig,
                 empty_fig,
                 empty_fig,
-                "Erreur"
+                html.Div("Erreur lors du chargement du tableau d'interprétation")
             )
