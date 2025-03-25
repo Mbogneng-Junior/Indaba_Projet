@@ -1,5 +1,6 @@
 import dash_bootstrap_components as dbc
 from dash import html, dcc
+import plotly.express as px
 
 def create_health_analysis_layout():
     """Crée le layout pour la page d'analyse de santé et d'éligibilité"""
@@ -8,168 +9,131 @@ def create_health_analysis_layout():
             dbc.Col([
                 html.H2("🏥 Conditions de Santé & Éligibilité", 
                        className="text-primary text-center mb-3"),
-                html.P("Analyse de l'impact des conditions médicales sur l'éligibilité au don",
+                html.P("Analyse des facteurs d'éligibilité et des raisons d'indisponibilité",
                       className="text-muted text-center mb-4"),
             ])
         ]),
         
-        # KPIs et filtres
+        # Vue d'ensemble de l'éligibilité
         dbc.Row([
-            # KPIs
             dbc.Col([
                 dbc.Card([
+                    dbc.CardHeader("Statut d'éligibilité global"),
                     dbc.CardBody([
-                        dbc.Row([
-                            dbc.Col([
-                                html.Div([
-                                    html.H3(id="health-total-donneurs", className="text-primary mb-0"),
-                                    html.Small("Total donneurs", className="text-muted")
-                                ], className="text-center")
-                            ], width=3),
-                            dbc.Col([
-                                html.Div([
-                                    html.H3(id="health-taux-eligibilite", className="text-success mb-0"),
-                                    html.Small("Taux d'éligibilité", className="text-muted")
-                                ], className="text-center")
-                            ], width=3),
-                            dbc.Col([
-                                html.Div([
-                                    html.H3(id="health-conditions-frequentes", className="text-warning mb-0"),
-                                    html.Small("Conditions fréquentes", className="text-muted")
-                                ], className="text-center")
-                            ], width=3),
-                            dbc.Col([
-                                html.Div([
-                                    html.H3(id="health-taux-indisponibilite", className="text-danger mb-0"),
-                                    html.Small("Taux d'indisponibilité", className="text-muted")
-                                ], className="text-center")
-                            ], width=3),
+                        dcc.Graph(
+                            id='eligibility-pie-chart',
+                            figure={}  # Sera mis à jour par le callback
+                        )
+                    ])
+                ], className="shadow-sm mb-4")
+            ], width=6),
+            
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader("Statistiques détaillées"),
+                    dbc.CardBody([
+                        html.Div([
+                            html.H4(id="eligible-count", className="text-success"),
+                            html.P("Individus éligibles", className="text-muted")
+                        ], className="mb-3"),
+                        html.Div([
+                            html.H4(id="temp-unavailable-count", className="text-warning"),
+                            html.P("Temporairement non disponibles", className="text-muted")
+                        ], className="mb-3"),
+                        html.Div([
+                            html.H4(id="non-eligible-count", className="text-danger"),
+                            html.P("Non éligibles", className="text-muted")
                         ])
                     ])
                 ], className="shadow-sm mb-4")
-            ], width=12),
-            
-            # Filtres
+            ], width=6)
+        ]),
+        
+        # Problèmes de santé et raisons d'indisponibilité
+        dbc.Row([
             dbc.Col([
                 dbc.Card([
-                    dbc.CardHeader("Filtres d'analyse"),
+                    dbc.CardHeader("Top 3 des problèmes de santé"),
                     dbc.CardBody([
-                        dbc.Row([
-                            dbc.Col([
-                                html.Label("Groupe démographique", className="fw-bold mb-2"),
-                                dcc.Dropdown(
-                                    id='health-demographic-dropdown',
-                                    options=[
-                                        {'label': 'Genre', 'value': 'genre'},
-                                        {'label': 'Âge', 'value': 'age'},
-                                        {'label': 'Profession', 'value': 'profession'},
-                                        {'label': 'Arrondissement', 'value': 'arrondissement'}
-                                    ],
-                                    value='genre',
-                                    className="mb-3"
-                                )
-                            ], width=6),
-                            dbc.Col([
-                                html.Label("Type de condition", className="fw-bold mb-2"),
-                                dcc.Dropdown(
-                                    id='health-condition-type-dropdown',
-                                    options=[
-                                        {'label': 'Toutes les conditions', 'value': 'all'},
-                                        {'label': 'Maladies chroniques', 'value': 'chronic'},
-                                        {'label': 'Conditions temporaires', 'value': 'temporary'},
-                                        {'label': 'Facteurs de risque', 'value': 'risk'}
-                                    ],
-                                    value='all',
-                                    className="mb-3"
-                                )
-                            ], width=6)
-                        ])
+                        dcc.Graph(
+                            id='top-health-issues',
+                            figure={}  # Sera mis à jour par le callback
+                        )
+                    ])
+                ], className="shadow-sm mb-4")
+            ], width=6),
+            
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader("Top 3 des raisons d'indisponibilité"),
+                    dbc.CardBody([
+                        dcc.Graph(
+                            id='top-unavailability-reasons',
+                            figure={}  # Sera mis à jour par le callback
+                        )
+                    ])
+                ], className="shadow-sm mb-4")
+            ], width=6)
+        ]),
+        
+        # Graphiques détaillés
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader("Problèmes de santé - Non éligibilité"),
+                    dbc.CardBody([
+                        dcc.Graph(
+                            id='health-issues-bar',
+                            figure={}  # Sera mis à jour par le callback
+                        )
                     ])
                 ], className="shadow-sm mb-4")
             ], width=12)
         ]),
         
-        # Visualisations principales
-        dbc.Row([
-            # Distribution des conditions
-            dbc.Col([
-                html.H4("Distribution des Conditions Médicales", 
-                       className="text-primary fw-bold mb-3"),
-                dbc.Card([
-                    dbc.CardBody([
-                        dcc.Graph(id='health-conditions-distribution')
-                    ])
-                ], className="shadow-sm mb-4"),
-                
-                # Impact sur l'éligibilité
-                html.H4("Impact sur l'Éligibilité", 
-                       className="text-primary fw-bold mb-3"),
-                dbc.Card([
-                    dbc.CardBody([
-                        dcc.Graph(id='health-eligibility-impact')
-                    ])
-                ], className="shadow-sm")
-            ], width=8),
-            
-            # Analyses complémentaires
-            dbc.Col([
-                html.H4("Analyses Détaillées", 
-                       className="text-primary fw-bold mb-3"),
-                dbc.Tabs([
-                    dbc.Tab([
-                        dcc.Graph(id='health-condition-correlation')
-                    ], label="Corrélations"),
-                    
-                    dbc.Tab([
-                        dcc.Graph(id='health-demographic-patterns')
-                    ], label="Patterns"),
-                    
-                    dbc.Tab([
-                        dcc.Graph(id='health-temporal-trends')
-                    ], label="Tendances")
-                ], className="mb-4"),
-                
-                # Statistiques clés
-                html.H4("Statistiques Clés", 
-                       className="text-primary fw-bold mb-3"),
-                dbc.Card([
-                    dbc.CardBody([
-                        html.Div(id='health-key-statistics')
-                    ])
-                ], className="shadow-sm")
-            ], width=4)
-        ]),
-        
-        # Analyse des facteurs de risque
         dbc.Row([
             dbc.Col([
-                html.H4("Analyse des Facteurs de Risque", 
-                       className="text-primary fw-bold mt-4 mb-3"),
                 dbc.Card([
+                    dbc.CardHeader("Raisons d'indisponibilité temporaire"),
                     dbc.CardBody([
-                        dbc.Row([
-                            dbc.Col([
-                                dcc.Graph(id='health-risk-factors-heatmap')
-                            ], width=6),
-                            dbc.Col([
-                                dcc.Graph(id='health-eligibility-prediction')
-                            ], width=6)
-                        ])
+                        dcc.Graph(
+                            id='temp-unavailability-bar',
+                            figure={}  # Sera mis à jour par le callback
+                        )
                     ])
-                ], className="shadow-sm")
+                ], className="shadow-sm mb-4")
             ], width=12)
         ]),
         
-        # Recommandations
+        # Analyse géographique
         dbc.Row([
             dbc.Col([
-                html.H4("Recommandations Médicales", 
-                       className="text-primary fw-bold mt-4 mb-3"),
                 dbc.Card([
+                    dbc.CardHeader("Analyse par zone géographique"),
                     dbc.CardBody([
-                        html.Div(id='health-medical-recommendations')
+                        dbc.Tabs([
+                            dbc.Tab([
+                                dcc.Graph(
+                                    id='city-analysis',
+                                    figure={}  # Sera mis à jour par le callback
+                                )
+                            ], label="Par ville"),
+                            dbc.Tab([
+                                dcc.Graph(
+                                    id='district-analysis',
+                                    figure={}  # Sera mis à jour par le callback
+                                )
+                            ], label="Par arrondissement"),
+                            dbc.Tab([
+                                dcc.Graph(
+                                    id='neighborhood-analysis',
+                                    figure={}  # Sera mis à jour par le callback
+                                )
+                            ], label="Par quartier")
+                        ])
                     ])
                 ], className="shadow-sm")
             ], width=12)
         ])
+        
     ], fluid=True, className="px-4 py-3")

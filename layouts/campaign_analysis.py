@@ -1,153 +1,122 @@
 import dash_bootstrap_components as dbc
 from dash import html, dcc
+import plotly.express as px
+from datetime import datetime
 
 def create_campaign_analysis_layout():
-    """Crée le layout pour la page d'analyse des campagnes"""
+    """Crée le layout pour la page d'analyse des campagnes de don de sang"""
     return dbc.Container([
+        # En-tête
         dbc.Row([
             dbc.Col([
-                html.H2("📊 Analyse des Campagnes", 
-                       className="text-primary text-center mb-3"),
-                html.P("Analyse de l'efficacité des campagnes de don de sang",
-                      className="text-muted text-center mb-4"),
+                html.H2("Analyse de l'Efficacité des Campagnes", 
+                       className="text-primary mb-3"),
+                html.P("Analyse des tendances et comportements des donneurs de sang",
+                      className="text-muted mb-4"),
             ])
         ]),
         
-        # KPIs et filtres
+        # Filtres temporels
         dbc.Row([
-            # KPIs
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader("Période d'analyse"),
+                    dbc.CardBody([
+                        dcc.DatePickerRange(
+                            id='campaign-date-range',
+                            className="mb-3 w-100",
+                            start_date='1977-12-25',
+                            end_date='2020-10-12',
+                            min_date_allowed='1977-12-25',
+                            max_date_allowed='2020-10-12',
+                            style={'zIndex': 1000}
+                        )
+                    ])
+                ], className="shadow-sm mb-4")
+            ])
+        ]),
+        
+        # KPIs des campagnes
+        dbc.Row([
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
+                        html.H4("Indicateurs Clés", className="card-title mb-3"),
                         dbc.Row([
                             dbc.Col([
                                 html.Div([
-                                    html.H3(id="total-campagnes", className="text-primary mb-0"),
-                                    html.Small("Campagnes", className="text-muted")
+                                    html.H3(id="campaign-total-donations", className="text-primary mb-0"),
+                                    html.Small("Total des dons", className="text-muted")
                                 ], className="text-center")
                             ], width=4),
                             dbc.Col([
                                 html.Div([
-                                    html.H3(id="total-participants", className="text-success mb-0"),
-                                    html.Small("Participants", className="text-muted")
+                                    html.H3(id="campaign-peak-period", className="text-success mb-0"),
+                                    html.Small("Période la plus active", className="text-muted")
                                 ], className="text-center")
                             ], width=4),
                             dbc.Col([
                                 html.Div([
-                                    html.H3(id="taux-participation", className="text-info mb-0"),
-                                    html.Small("Taux de participation", className="text-muted")
+                                    html.H3(id="campaign-growth-rate", className="text-warning mb-0"),
+                                    html.Small("Taux de croissance", className="text-muted")
                                 ], className="text-center")
-                            ], width=4),
+                            ], width=4)
                         ])
                     ])
                 ], className="shadow-sm mb-4")
-            ], width=12),
-            
-            # Filtres
+            ])
+        ]),
+        
+        # Analyse par caractéristiques
+        dbc.Row([
             dbc.Col([
                 dbc.Card([
-                    dbc.CardHeader("Filtres d'analyse"),
+                    dbc.CardHeader("Analyse par caractéristiques"),
                     dbc.CardBody([
-                        dbc.Row([
-                            dbc.Col([
-                                html.Label("Période", className="fw-bold mb-2"),
-                                dcc.RangeSlider(
-                                    id='campaign-period-slider',
-                                    min=2019,
-                                    max=2023,
-                                    value=[2019, 2023],
-                                    marks={str(year): str(year) for year in range(2019, 2024)},
-                                    className="mb-3"
-                                )
-                            ], width=6),
-                            dbc.Col([
-                                html.Label("Groupes démographiques", className="fw-bold mb-2"),
-                                dcc.Dropdown(
-                                    id='demographic-filter',
-                                    options=[
-                                        {'label': 'Genre', 'value': 'genre'},
-                                        {'label': 'Profession', 'value': 'profession'},
-                                        {'label': 'Arrondissement', 'value': 'arrondissement'},
-                                        {'label': 'Âge', 'value': 'age'}
-                                    ],
-                                    value='genre',
-                                    className="mb-3"
-                                )
-                            ], width=6)
+                        dbc.Tabs([
+                            dbc.Tab([
+                                dcc.Graph(id='campaign-age-analysis')
+                            ], label="Âge"),
+                            dbc.Tab([
+                                dcc.Graph(id='campaign-gender-analysis')
+                            ], label="Genre"),
+                            dbc.Tab([
+                                dcc.Graph(id='campaign-education-analysis')
+                            ], label="Niveau d'études"),
+                            dbc.Tab([
+                                dcc.Graph(id='campaign-profession-analysis')
+                            ], label="Profession"),
+                            dbc.Tab([
+                                dcc.Graph(id='campaign-religion-analysis')
+                            ], label="Religion"),
+                            dbc.Tab([
+                                dcc.Graph(id='campaign-marital-analysis')
+                            ], label="Situation matrimoniale")
                         ])
                     ])
                 ], className="shadow-sm mb-4")
-            ], width=12)
+            ])
         ]),
         
-        # Graphiques principaux
+        # Analyse temporelle
         dbc.Row([
-            # Tendances temporelles
             dbc.Col([
-                html.H4("Tendances Temporelles", 
-                       className="text-primary fw-bold mb-3"),
                 dbc.Card([
+                    dbc.CardHeader("Évolution des dons dans le temps"),
                     dbc.CardBody([
-                        dcc.Graph(id='seasonal-trends')
+                        dcc.Graph(id='campaign-timeline')
                     ])
-                ], className="shadow-sm mb-4"),
-                
-                dbc.Card([
-                    dbc.CardBody([
-                        dcc.Graph(id='weekly-patterns')
-                    ])
-                ], className="shadow-sm")
-            ], width=8),
+                ], className="shadow-sm mb-4")
+            ], md=8),
             
-            # Analyse démographique
             dbc.Col([
-                html.H4("Analyse Démographique", 
-                       className="text-primary fw-bold mb-3"),
                 dbc.Card([
+                    dbc.CardHeader("Distribution mensuelle"),
                     dbc.CardBody([
-                        dcc.Graph(id='demographic-distribution')
+                        dcc.Graph(id='campaign-monthly-distribution')
                     ])
-                ], className="shadow-sm mb-4"),
-                
-                dbc.Card([
-                    dbc.CardBody([
-                        dcc.Graph(id='participation-rate')
-                    ])
-                ], className="shadow-sm")
-            ], width=4)
-        ]),
-        
-        # Analyses détaillées
-        dbc.Row([
-            dbc.Col([
-                html.H4("Comportement des Donneurs", 
-                       className="text-primary fw-bold mt-4 mb-3"),
-                dbc.Tabs([
-                    dbc.Tab([
-                        dcc.Graph(id='donor-retention')
-                    ], label="Fidélisation", tab_id="tab-retention"),
-                    
-                    dbc.Tab([
-                        dcc.Graph(id='donation-frequency')
-                    ], label="Fréquence des dons", tab_id="tab-frequency"),
-                    
-                    dbc.Tab([
-                        dcc.Graph(id='donor-journey')
-                    ], label="Parcours donneur", tab_id="tab-journey")
-                ])
-            ], width=12)
-        ]),
-        
-        # Recommandations
-        dbc.Row([
-            dbc.Col([
-                html.H4("Recommandations", 
-                       className="text-primary fw-bold mt-4 mb-3"),
-                dbc.Card([
-                    dbc.CardBody([
-                        html.Div(id='campaign-recommendations')
-                    ])
-                ], className="shadow-sm")
-            ], width=12)
+                ], className="shadow-sm mb-4")
+            ], md=4)
         ])
+        
     ], fluid=True, className="px-4 py-3")

@@ -1,0 +1,335 @@
+/* Variables globales */
+:root {
+    --primary: #c62828;
+    --primary-light: #ff5f52;
+    --primary-dark: #8e0000;
+    --secondary: #1a1f3c;
+    --secondary-light: #434868;
+    --secondary-dark: #000014;
+    --success: #2e7d32;
+    --danger: #c62828;
+    --background: #f8f9fa;
+    --white: #ffffff;
+    --gray: #6c757d;
+    --border: rgba(0, 0, 0, 0.125);
+}
+
+/* Style général */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--background);
+    color: var(--secondary);
+}
+
+/* En-tête */
+.header-container {
+    padding: 1.5rem 0;
+    background: linear-gradient(135deg, var(--secondary-dark), var(--primary-dark));
+    margin-bottom: 2rem;
+}
+
+.app-title {
+    color: var(--white);
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.app-subtitle {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1rem;
+}
+
+/* Bouton Explorer */
+.explore-button {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    border-radius: 50px !important;
+    padding: 12px 30px !important;
+    font-size: 16px !important;
+    box-shadow: 0 4px 15px rgba(198, 40, 40, 0.3) !important;
+    transition: all 0.3s ease !important;
+}
+
+.explore-button:hover {
+    background-color: var(--primary-dark) !important;
+    border-color: var(--primary-dark) !important;
+    transform: translateY(-2px);
+}
+
+/* Cartes de statistiques */
+.stats-row {
+    margin-top: -3rem;
+}
+
+.stat-card {
+    background: var(--white);
+    border: none;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    height: 100%;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon-wrapper {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    margin-bottom: 0.75rem;
+}
+
+.stat-icon-bg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: var(--primary);
+    opacity: 0.1;
+    border-radius: 8px;
+}
+
+.stat-icon-bg.success {
+    background: var(--success);
+}
+
+.stat-icon-bg.danger {
+    background: var(--danger);
+}
+
+.stat-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--primary);
+    font-size: 1rem;
+}
+
+.text-success .stat-icon {
+    color: var(--success);
+}
+
+.text-danger .stat-icon {
+    color: var(--danger);
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--secondary);
+    margin-bottom: 0.2rem;
+}
+
+.stat-label {
+    color: var(--gray);
+    font-size: 0.875rem;
+    margin: 0;
+    margin-bottom: 0.2rem;
+}
+
+.stat-detail {
+    color: var(--gray);
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+/* Carte des filtres */
+.filter-card {
+    background: var(--white);
+    border: none;
+    border-radius: 0.75rem;
+    height: 100%;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.filter-title {
+    color: var(--secondary);
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.filter-group {
+    margin-bottom: 1.25rem;
+}
+
+.filter-label {
+    display: block;
+    color: var(--gray);
+    font-size: 0.875rem;
+    margin-bottom: 0.4rem;
+}
+
+.filter-dropdown .Select-control {
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    transition: border-color 0.2s;
+}
+
+.filter-dropdown .Select-control:hover {
+    border-color: var(--primary);
+}
+
+.filter-date {
+    width: 100%;
+}
+
+/* Carte principale */
+.map-card {
+    background: var(--white);
+    border: none;
+    border-radius: 0.75rem;
+    height: 100%;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.map-frame {
+    width: 100%;
+    height: 600px;
+    border: none;
+}
+
+/* Carte des statistiques */
+.stats-card {
+    background: var(--white);
+    border: none;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.stats-body {
+    padding: 0;
+}
+
+/* Graphiques */
+.js-plotly-plot {
+    border-radius: 0.5rem;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    background-color: #1a1f3c;  
+    min-height: 100vh;
+    padding: 2rem 1rem;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.sidebar .nav-link {
+    color: white !important;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.sidebar .nav-link:hover {
+    background-color: #dc3545 !important;  
+    color: white !important;
+}
+
+.sidebar .nav-link.active {
+    background-color: #dc3545 !important;  
+    color: white !important;
+}
+
+.sidebar-header {
+    background: transparent;
+}
+
+.sidebar-title {
+    color: var(--white);
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.sidebar-content {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.sidebar-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.nav-link {
+    color: rgba(255, 255, 255, 0.8) !important;
+    padding: 0.75rem 1rem !important;
+    border-radius: 8px !important;
+    margin-bottom: 0.25rem;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+    white-space: nowrap;
+}
+
+.nav-link:hover {
+    color: var(--white) !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.nav-link.active {
+    color: var(--white) !important;
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    font-weight: 500;
+}
+
+/* Content wrapper for main content */
+.content-wrapper {
+    padding: 2rem;
+    width: 100%;
+    margin-left: 16rem;
+    transition: margin-left 0.3s ease;
+    min-height: 100vh;
+    background-color: var(--background);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .stats-row {
+        margin-top: 0;
+    }
+    
+    .stat-card {
+        margin-bottom: 0.75rem;
+    }
+    
+    .map-frame {
+        height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-container {
+        padding: 1rem 0;
+    }
+    
+    .app-title {
+        font-size: 1.75rem;
+    }
+    
+    .stat-value {
+        font-size: 1.25rem;
+    }
+    
+    .filter-card {
+        margin-bottom: 1rem;
+    }
+}

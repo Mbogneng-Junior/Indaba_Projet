@@ -1,115 +1,164 @@
 import dash_bootstrap_components as dbc
 from dash import html, dcc
-import json
-import os
-
-def load_unique_values():
-    """Charge les valeurs uniques depuis le fichier JSON"""
-    try:
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.dirname(current_dir)
-        json_path = os.path.join(project_root, 'ml_api', 'unique_values.json')
-        with open(json_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"Erreur lors du chargement des valeurs uniques : {str(e)}")
-        return {
-            'Profession': [],
-            'Quartier_de_Residence': [],
-            'Arrondissement_de_residence': [],
-            'Genre': []
-        }
+from utils.data_utils import get_unique_values
 
 def create_eligibility_prediction_layout():
-    # Charger les valeurs uniques
-    unique_values = load_unique_values()
-    
-    # Ajouter "Autre" à chaque liste
-    for key in unique_values:
-        if 'Autre' not in unique_values[key]:
-            unique_values[key].append('Autre')
+    """Crée le layout pour la page de prédiction d'éligibilité"""
+    # Récupération des professions uniques
+    professions = get_unique_values('profession')
     
     return dbc.Container([
+        # En-tête
         dbc.Row([
             dbc.Col([
-                html.H2("Prédiction d'Éligibilité au Don de Sang", className="text-center mb-4"),
-                html.P("Remplissez le formulaire ci-dessous pour vérifier l'éligibilité au don de sang.", className="text-center")
+                html.H2("Prédiction d'Éligibilité au Don de Sang", 
+                       className="text-primary mb-3"),
+                html.P("Utilisez notre modèle d'IA pour prédire l'éligibilité d'un nouveau donneur",
+                      className="text-muted mb-4"),
             ])
         ]),
         
+        # Formulaire de prédiction
         dbc.Row([
             dbc.Col([
                 dbc.Card([
+                    dbc.CardHeader("Informations du Donneur"),
                     dbc.CardBody([
+                        # Informations démographiques
                         dbc.Row([
                             dbc.Col([
-                                dbc.Label("Âge"),
+                                html.Label("Âge", className="fw-bold mb-2"),
                                 dbc.Input(
-                                    id="age-input",
+                                    id="donor-age",
                                     type="number",
                                     min=18,
-                                    max=100,
-                                    placeholder="Entrez votre âge"
+                                    max=65,
+                                    placeholder="Entrez l'âge",
+                                    className="mb-3"
                                 )
-                            ], width=6),
+                            ], md=6),
                             dbc.Col([
-                                dbc.Label("Sexe"),
+                                html.Label("Genre", className="fw-bold mb-2"),
                                 dcc.Dropdown(
-                                    id="sexe-input",
-                                    options=[{"label": s, "value": s} for s in unique_values['Genre']],
-                                    placeholder="Sélectionnez votre sexe"
+                                    id="donor-gender",
+                                    options=[
+                                        {"label": "Homme", "value": "Homme"},
+                                        {"label": "Femme", "value": "Femme"}
+                                    ],
+                                    placeholder="Sélectionnez le genre",
+                                    className="mb-3"
                                 )
-                            ], width=6)
-                        ], className="mb-3"),
+                            ], md=6)
+                        ]),
                         
+                        # Niveau d'études et situation matrimoniale
                         dbc.Row([
                             dbc.Col([
-                                dbc.Label("Profession"),
+                                html.Label("Niveau d'études", className="fw-bold mb-2"),
                                 dcc.Dropdown(
-                                    id="profession-input",
-                                    options=[{"label": p, "value": p} for p in unique_values['Profession']],
-                                    placeholder="Sélectionnez votre profession"
+                                    id="donor-education",
+                                    options=[
+                                        {"label": "Aucun", "value": "Aucun"},
+                                        {"label": "Primaire", "value": "Primaire"},
+                                        {"label": "Secondaire", "value": "Secondaire"},
+                                        {"label": "Universitaire", "value": "Universitaire"}
+                                    ],
+                                    placeholder="Sélectionnez le niveau d'études",
+                                    className="mb-3"
                                 )
-                            ], width=12)
-                        ], className="mb-3"),
+                            ], md=6),
+                            dbc.Col([
+                                html.Label("Situation matrimoniale", className="fw-bold mb-2"),
+                                dcc.Dropdown(
+                                    id="donor-marital-status",
+                                    options=[
+                                        {"label": "Célibataire", "value": "Célibataire"},
+                                        {"label": "Marié(e)", "value": "Marié (e)"},
+                                        {"label": "Divorcé(e)", "value": "Divorcé (e)"},
+                                        {"label": "Veuf/Veuve", "value": "Veuf (ve)"}
+                                    ],
+                                    placeholder="Sélectionnez la situation matrimoniale",
+                                    className="mb-3"
+                                )
+                            ], md=6)
+                        ]),
                         
+                        # Profession et religion
                         dbc.Row([
                             dbc.Col([
-                                dbc.Label("Quartier de Résidence"),
+                                html.Label("Profession", className="fw-bold mb-2"),
                                 dcc.Dropdown(
-                                    id="quartier-input",
-                                    options=[{"label": q, "value": q} for q in unique_values['Quartier_de_Residence']],
-                                    placeholder="Sélectionnez votre quartier"
+                                    id="donor-profession",
+                                    options=[{"label": p, "value": p} for p in professions],
+                                    placeholder="Sélectionnez la profession",
+                                    className="mb-3"
                                 )
-                            ], width=6),
+                            ], md=6),
                             dbc.Col([
-                                dbc.Label("Arrondissement de Résidence"),
+                                html.Label("Religion", className="fw-bold mb-2"),
                                 dcc.Dropdown(
-                                    id="arrondissement-input",
-                                    options=[{"label": a, "value": a} for a in unique_values['Arrondissement_de_residence']],
-                                    placeholder="Sélectionnez votre arrondissement"
+                                    id="donor-religion",
+                                    options=[
+                                        {"label": "Chrétien (Catholique)", "value": "chretien (catholique)"},
+                                        {"label": "Chrétien (Protestant)", "value": "chretien (protestant)"},
+                                        {"label": "Musulman", "value": "musulman"},
+                                        {"label": "Autre", "value": "autre"}
+                                    ],
+                                    placeholder="Sélectionnez la religion",
+                                    className="mb-3"
                                 )
-                            ], width=6)
-                        ], className="mb-3"),
+                            ], md=6)
+                        ]),
                         
+                        # Historique de don
+                        dbc.Row([
+                            dbc.Col([
+                                html.Label("A déjà donné le sang ?", className="fw-bold mb-2"),
+                                dcc.RadioItems(
+                                    id="donor-previous-donation",
+                                    options=[
+                                        {"label": "Oui", "value": "Oui"},
+                                        {"label": "Non", "value": "Non"}
+                                    ],
+                                    className="mb-3"
+                                )
+                            ], md=12)
+                        ]),
+                        
+                        # Bouton de prédiction
                         dbc.Row([
                             dbc.Col([
                                 dbc.Button(
-                                    "Prédire l'Éligibilité",
+                                    "Prédire l'éligibilité",
                                     id="predict-button",
                                     color="primary",
-                                    className="w-100"
+                                    className="w-100 mt-3"
                                 )
-                            ], width={"size": 6, "offset": 3})
-                        ], className="mt-4"),
-                        
-                        dbc.Row([
-                            dbc.Col([
-                                html.Div(id="prediction-output", className="mt-4 text-center")
                             ])
                         ])
                     ])
-                ])
-            ], width={"size": 8, "offset": 2})
+                ], className="shadow-sm mb-4")
+            ], md=8),
+            
+            # Résultat de la prédiction
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader("Résultat de la Prédiction"),
+                    dbc.CardBody([
+                        html.Div([
+                            html.H4(id="prediction-result", className="mb-3"),
+                            html.Div([
+                                html.Strong("Probabilité : "),
+                                html.Span(id="prediction-probability")
+                            ], className="mb-2"),
+                            html.Small(
+                                "Cette prédiction est basée sur un modèle d'apprentissage automatique "
+                                "et ne remplace pas l'avis d'un professionnel de santé.",
+                                className="text-muted"
+                            )
+                        ], id="prediction-container", style={"display": "none"})
+                    ])
+                ], className="shadow-sm")
+            ], md=4)
         ])
-    ], fluid=True)
+    ], fluid=True, className="px-4 py-3")

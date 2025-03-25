@@ -1,81 +1,75 @@
 from dash.dependencies import Input, Output, State
 import requests
-import dash_bootstrap_components as dbc
-from dash import html
-import os
-
-# URL de l'API (locale ou production)
-API_URL = os.getenv('API_URL', 'http://localhost:8000')
+import pandas as pd
+import numpy as np
 
 def init_eligibility_prediction_callbacks(app):
+    """Initialise les callbacks pour la prédiction d'éligibilité"""
+    
     @app.callback(
-        Output("prediction-output", "children"),
+        [
+            Output("prediction-container", "style"),
+            Output("prediction-result", "children"),
+            Output("prediction-result", "className"),
+            Output("prediction-probability", "children")
+        ],
         [Input("predict-button", "n_clicks")],
         [
-            State("age-input", "value"),
-            State("sexe-input", "value"),
-            State("profession-input", "value"),
-            State("quartier-input", "value"),
-            State("arrondissement-input", "value")
+            State("donor-age", "value"),
+            State("donor-gender", "value"),
+            State("donor-education", "value"),
+            State("donor-marital-status", "value"),
+            State("donor-profession", "value"),
+            State("donor-religion", "value"),
+            State("donor-previous-donation", "value")
         ]
     )
-    def predict_eligibility(n_clicks, age, sexe, profession, quartier, arrondissement):
+    def predict_eligibility(n_clicks, age, gender, education, marital_status, 
+                          profession, religion, previous_donation):
         if n_clicks is None:
-            return ""
+            return {"display": "none"}, "", "", ""
         
-        if not all([age, sexe, profession, quartier, arrondissement]):
-            return html.Div(
-                "Veuillez remplir tous les champs obligatoires",
-                style={"color": "red"}
+        # Vérification des champs requis
+        if not all([age, gender, education, marital_status, profession, religion, previous_donation]):
+            return (
+                {"display": "block"},
+                "Veuillez remplir tous les champs",
+                "text-warning",
+                ""
             )
         
         try:
-            # Préparation des données
+            # Préparation des données pour l'API
             data = {
-                "Age": int(age),
-                "Sexe": sexe,
-                "Profession": profession,
-                "Quartier_de_Residence": quartier,
-                "Arrondissement_de_residence": arrondissement
+                "age": age,
+                "genre": gender,
+                "niveau_d_etude": education,
+                "situation_matrimoniale_sm": marital_status,
+                "profession": profession,
+                "religion": religion,
+                "a_t_il_elle_deja_donne_le_sang": previous_donation
             }
             
             # Appel à l'API
-            try:
-                response = requests.post(f"{API_URL}/predict", json=data)
-                response.raise_for_status()  # Vérifie si la requête a réussi
-                result = response.json()
-            except requests.exceptions.ConnectionError:
-                return html.Div(
-                    "Erreur : Impossible de se connecter à l'API. Assurez-vous que l'API est en cours d'exécution.",
-                    style={"color": "red"}
-                )
-            except requests.exceptions.RequestException as e:
-                return html.Div(
-                    f"Erreur lors de l'appel à l'API : {str(e)}",
-                    style={"color": "red"}
-                )
+            response = requests.post("http://localhost:8000/predict", json=data)
+            prediction = response.json()
             
-            # Création de la carte de résultat
-            if result["eligible"]:
-                color = "success"
-                icon = "✓"
-                message = "Éligible au don de sang"
-            else:
-                color = "danger"
-                icon = "✗"
-                message = "Non éligible au don de sang"
+            # Formatage du résultat
+            result_text = "ÉLIGIBLE" if prediction["eligibilite"] else "NON ÉLIGIBLE"
+            result_class = "text-success" if prediction["eligibilite"] else "text-danger"
+            probability = f"{prediction['probabilite']*100:.1f}%"
             
-            return dbc.Card(
-                dbc.CardBody([
-                    html.H4(f"{icon} {message}", className=f"text-{color}"),
-                    html.P(f"Probabilité d'éligibilité : {result['probability']:.1%}")
-                ]),
-                className=f"border-{color} mb-3"
+            return (
+                {"display": "block"},
+                result_text,
+                result_class,
+                probability
             )
             
         except Exception as e:
-            print(f"Erreur détaillée : {str(e)}")  # Pour le débogage
-            return html.Div(
-                f"Une erreur s'est produite lors du traitement de votre demande : {str(e)}",
-                style={"color": "red"}
+            return (
+                {"display": "block"},
+                f"Erreur lors de la prédiction : {str(e)}",
+                "text-danger",
+                ""
             )

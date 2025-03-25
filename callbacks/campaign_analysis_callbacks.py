@@ -1,170 +1,239 @@
-import pandas as pd
-import numpy as np
+from dash.dependencies import Input, Output, State
 import plotly.express as px
 import plotly.graph_objects as go
-from dash.dependencies import Input, Output, State
-import dash_bootstrap_components as dbc
-from dash import html
+import pandas as pd
+import numpy as np
 from datetime import datetime
+import os
 
 def init_campaign_analysis_callbacks(app):
     """Initialise les callbacks pour l'analyse des campagnes"""
     
-    # Charger et prétraiter les données
-    df = pd.read_csv('data/processed_data.csv')
-    
-    # Conversion des dates
-    df['Date de remplissage de la fiche'] = pd.to_datetime(df['Date de remplissage de la fiche'])
-    df['Date de naissance'] = pd.to_datetime(df['Date de naissance'])
-    
-    # Extraire les informations temporelles
-    df['Année'] = df['Date de remplissage de la fiche'].dt.year
-    df['Mois'] = df['Date de remplissage de la fiche'].dt.month
-    df['Jour'] = df['Date de remplissage de la fiche'].dt.day_name()
-    df['Semaine'] = df['Date de remplissage de la fiche'].dt.isocalendar().week
-    
-    # Calculer l'âge
-    df['Age'] = ((df['Date de remplissage de la fiche'] - df['Date de naissance']).dt.total_seconds() / (365.25 * 24 * 60 * 60)).round()
-    
-    # Créer des groupes d'âge
-    df['Groupe_Age'] = pd.cut(df['Age'], 
-                             bins=[0, 25, 35, 45, 55, 100],
-                             labels=['18-25', '26-35', '36-45', '46-55', '55+'])
+    def load_data():
+        """Charge et prépare les données"""
+        try:
+            df = pd.read_csv('data/processed_data.csv')
+            df['date_de_remplissage'] = pd.to_datetime(df['date_de_remplissage'])
+            return df
+        except FileNotFoundError:
+            print("Erreur: Le fichier de données n'a pas été trouvé dans le chemin attendu")
+            print("Chemin actuel:", os.getcwd())
+            return pd.DataFrame()  # Retourne un DataFrame vide en cas d'erreur
     
     @app.callback(
-        [Output('total-campagnes', 'children'),
-         Output('total-participants', 'children'),
-         Output('taux-participation', 'children'),
-         Output('seasonal-trends', 'figure'),
-         Output('weekly-patterns', 'figure'),
-         Output('demographic-distribution', 'figure'),
-         Output('participation-rate', 'figure'),
-         Output('donor-retention', 'figure'),
-         Output('donation-frequency', 'figure'),
-         Output('donor-journey', 'figure'),
-         Output('campaign-recommendations', 'children')],
-        [Input('campaign-period-slider', 'value'),
-         Input('demographic-filter', 'value')]
+        [
+            Output('campaign-total-donations', 'children'),
+            Output('campaign-peak-period', 'children'),
+            Output('campaign-growth-rate', 'children')
+        ],
+        [
+            Input('campaign-date-range', 'start_date'),
+            Input('campaign-date-range', 'end_date')
+        ]
     )
-    def update_campaign_analysis(years, demographic):
-        # Filtrer les données par période
-        mask = df['Année'].between(years[0], years[1])
-        dff = df[mask].copy()
+    def update_campaign_kpis(start_date, end_date):
+        df = load_data()
         
-        # 1. Calculer les KPIs
-        n_campaigns = dff.groupby(['Année', 'Mois']).size().shape[0]
-        n_participants = len(dff)
-        participation_rate = f"{(dff['A-t-il (elle) déjà donné le sang'] == 'oui').mean() * 100:.1f}%"
+        if df.empty:
+            return "0", "N/A", "0%"
         
-        # 2. Tendances saisonnières
-        monthly_trends = dff.groupby(['Année', 'Mois']).size().reset_index(name='Dons')
-        seasonal_fig = px.line(monthly_trends, 
-                             x='Mois', 
-                             y='Dons',
-                             color='Année',
-                             title='Tendances saisonnières des dons',
-                             labels={'Dons': 'Nombre de dons'},
-                             template='plotly_white')
-        seasonal_fig.update_layout(hovermode='x unified')
+        # Conversion des dates
+        start_date = pd.to_datetime(start_date)
+        end_date = pd.to_datetime(end_date)
         
-        # 3. Patterns hebdomadaires
-        weekly_data = dff.groupby('Jour').size().reset_index(name='Dons')
-        weekly_fig = px.bar(weekly_data,
-                          x='Jour',
-                          y='Dons',
-                          title='Distribution des dons par jour de la semaine',
-                          color_discrete_sequence=['#17a2b8'],
-                          template='plotly_white')
+        # Filtrage par date
+        mask = (df['date_de_remplissage'] >= start_date) & (df['date_de_remplissage'] <= end_date)
+        filtered_df = df[mask]
         
-        # 4. Distribution démographique
-        if demographic == 'genre':
-            demo_col = 'Genre'
-        elif demographic == 'profession':
-            demo_col = 'Profession'
-        elif demographic == 'arrondissement':
-            demo_col = 'Arrondissement de résidence'
+        # Total des dons
+        total_dons = len(filtered_df)
+        
+        # Période la plus active (mois)
+        if not filtered_df.empty:
+            monthly_counts = filtered_df['date_de_remplissage'].dt.to_period('M').value_counts()
+            peak_month = monthly_counts.index[0] if not monthly_counts.empty else "N/A"
+            peak_month = str(peak_month)
         else:
-            demo_col = 'Groupe_Age'
+            peak_month = "N/A"
             
-        demo_data = dff.groupby(demo_col).size().reset_index(name='Nombre')
-        demo_fig = px.pie(demo_data,
-                         values='Nombre',
-                         names=demo_col,
-                         title=f'Distribution par {demo_col}',
-                         template='plotly_white')
+        # Taux de croissance
+        if not filtered_df.empty:
+            monthly_data = filtered_df.groupby(filtered_df['date_de_remplissage'].dt.to_period('M')).size()
+            if len(monthly_data) > 1:
+                first_month = monthly_data.iloc[0]
+                last_month = monthly_data.iloc[-1]
+                growth = ((last_month - first_month) / first_month) * 100
+            else:
+                growth = 0
+        else:
+            growth = 0
         
-        # 5. Taux de participation
-        participation_data = dff.groupby([demo_col, 'A-t-il (elle) déjà donné le sang']).size().unstack(fill_value=0)
-        participation_data['Taux'] = participation_data['oui'] / (participation_data['oui'] + participation_data['non'])
-        participation_fig = px.bar(participation_data.reset_index(),
-                                 x=demo_col,
-                                 y='Taux',
-                                 title='Taux de participation par groupe',
-                                 color_discrete_sequence=['#28a745'],
-                                 template='plotly_white')
+        return f"{total_dons:,}", peak_month, f"{growth:.1f}%"
+
+    @app.callback(
+        Output('campaign-timeline', 'figure'),
+        [Input('campaign-date-range', 'start_date'),
+         Input('campaign-date-range', 'end_date')]
+    )
+    def update_campaign_timeline(start_date, end_date):
+        df = load_data()
         
-        # 6. Fidélisation des donneurs
-        retention_data = dff.groupby('A-t-il (elle) déjà donné le sang').size()
-        retention_fig = px.pie(values=retention_data.values,
-                             names=retention_data.index,
-                             title='Taux de fidélisation des donneurs',
-                             template='plotly_white')
+        if df.empty:
+            return go.Figure().add_annotation(
+                text="Données non disponibles",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5, showarrow=False
+            )
         
-        # 7. Fréquence des dons
-        freq_data = dff.groupby(['Année', 'Mois']).size().reset_index(name='Dons')
-        freq_fig = px.box(freq_data,
-                         y='Dons',
-                         title='Distribution de la fréquence des dons',
-                         template='plotly_white')
+        # Conversion des dates
+        start_date = pd.to_datetime(start_date)
+        end_date = pd.to_datetime(end_date)
         
-        # 8. Parcours donneur
-        journey_data = dff.groupby(['Année', demo_col]).size().reset_index(name='Dons')
-        journey_fig = px.line(journey_data,
-                            x='Année',
-                            y='Dons',
-                            color=demo_col,
-                            title='Évolution des dons par groupe',
-                            template='plotly_white')
+        # Filtrage par date
+        mask = (df['date_de_remplissage'] >= start_date) & (df['date_de_remplissage'] <= end_date)
+        filtered_df = df[mask]
         
-        # 9. Générer des recommandations
-        best_month = monthly_trends.loc[monthly_trends['Dons'].idxmax()]
-        best_day = weekly_data.loc[weekly_data['Dons'].idxmax()]
-        best_demo = demo_data.loc[demo_data['Nombre'].idxmax()]
+        if filtered_df.empty:
+            return go.Figure().add_annotation(
+                text="Aucune donnée disponible pour la période sélectionnée",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5, showarrow=False
+            )
         
-        recommendations = dbc.Row([
-            dbc.Col([
-                html.H5("Recommandations pour les futures campagnes", className="mb-3"),
-                html.Ul([
-                    html.Li([
-                        html.Strong("Période optimale : "),
-                        f"Le mois {best_month['Mois']} montre historiquement le plus grand nombre de dons"
-                    ], className="mb-2"),
-                    html.Li([
-                        html.Strong("Jour recommandé : "),
-                        f"Les {best_day['Jour']} sont les plus productifs pour les collectes"
-                    ], className="mb-2"),
-                    html.Li([
-                        html.Strong("Groupe cible : "),
-                        f"Le groupe {best_demo[demo_col]} montre la plus forte participation"
-                    ], className="mb-2"),
-                    html.Li([
-                        html.Strong("Stratégie de fidélisation : "),
-                        f"Se concentrer sur la conversion des {participation_rate} de donneurs réguliers"
-                    ])
-                ])
-            ])
-        ])
+        # Agrégation par jour
+        daily_counts = filtered_df.groupby('date_de_remplissage').size().reset_index(name='count')
         
-        return (
-            f"{n_campaigns:,}",
-            f"{n_participants:,}",
-            participation_rate,
-            seasonal_fig,
-            weekly_fig,
-            demo_fig,
-            participation_fig,
-            retention_fig,
-            freq_fig,
-            journey_fig,
-            recommendations
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=daily_counts['date_de_remplissage'],
+            y=daily_counts['count'],
+            mode='lines+markers',
+            line=dict(color='#dc3545', width=2),
+            marker=dict(size=6, color='#0d2c54'),
+            name='Nombre de dons'
+        ))
+        
+        fig.update_layout(
+            title='Évolution quotidienne des dons',
+            xaxis_title='Date',
+            yaxis_title='Nombre de dons',
+            template='plotly_white',
+            hovermode='x unified'
         )
+        
+        return fig
+
+    @app.callback(
+        Output('campaign-monthly-distribution', 'figure'),
+        [Input('campaign-date-range', 'start_date'),
+         Input('campaign-date-range', 'end_date')]
+    )
+    def update_monthly_distribution(start_date, end_date):
+        df = load_data()
+        
+        if df.empty:
+            return go.Figure().add_annotation(
+                text="Données non disponibles",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5, showarrow=False
+            )
+        
+        # Conversion des dates
+        start_date = pd.to_datetime(start_date)
+        end_date = pd.to_datetime(end_date)
+        
+        # Filtrage par date
+        mask = (df['date_de_remplissage'] >= start_date) & (df['date_de_remplissage'] <= end_date)
+        filtered_df = df[mask]
+        
+        if filtered_df.empty:
+            return go.Figure().add_annotation(
+                text="Aucune donnée disponible pour la période sélectionnée",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5, showarrow=False
+            )
+        
+        # Agrégation par mois
+        monthly_counts = filtered_df.groupby(filtered_df['date_de_remplissage'].dt.month).size().reset_index(name='count')
+        month_names = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
+        monthly_counts['month_name'] = monthly_counts['date_de_remplissage'].apply(lambda x: month_names[x-1])
+        
+        fig = px.bar(
+            monthly_counts,
+            x='month_name',
+            y='count',
+            color='count',
+            color_continuous_scale=['#0d2c54', '#dc3545']
+        )
+        
+        fig.update_layout(
+            title='Distribution mensuelle des dons',
+            xaxis_title='Mois',
+            yaxis_title='Nombre de dons',
+            template='plotly_white'
+        )
+        
+        return fig
+
+    # Callbacks pour les analyses par caractéristique
+    for characteristic in ['age', 'genre', 'niveau_d_etude', 'profession', 'religion', 'situation_matrimoniale_(sm)']:
+        @app.callback(
+            Output(f'campaign-{characteristic.replace("_", "-")}-analysis', 'figure'),
+            [Input('campaign-date-range', 'start_date'),
+             Input('campaign-date-range', 'end_date')]
+        )
+        def update_characteristic_analysis(start_date, end_date, characteristic=characteristic):
+            df = load_data()
+            
+            if df.empty:
+                return go.Figure().add_annotation(
+                    text="Données non disponibles",
+                    xref="paper", yref="paper",
+                    x=0.5, y=0.5, showarrow=False
+                )
+            
+            # Conversion des dates
+            start_date = pd.to_datetime(start_date)
+            end_date = pd.to_datetime(end_date)
+            
+            # Filtrage par date
+            mask = (df['date_de_remplissage'] >= start_date) & (df['date_de_remplissage'] <= end_date)
+            filtered_df = df[mask]
+            
+            if filtered_df.empty:
+                return go.Figure().add_annotation(
+                    text="Aucune donnée disponible pour la période sélectionnée",
+                    xref="paper", yref="paper",
+                    x=0.5, y=0.5, showarrow=False
+                )
+            
+            # Analyse par caractéristique
+            char_counts = filtered_df[characteristic].value_counts().reset_index()
+            char_counts.columns = ['Catégorie', 'Nombre']
+            
+            # Créer le graphique
+            if characteristic == 'age':
+                fig = px.histogram(
+                    filtered_df,
+                    x=characteristic,
+                    nbins=20,
+                    title=f'Distribution par {characteristic}',
+                    color_discrete_sequence=['#dc3545']
+                )
+            else:
+                fig = px.bar(
+                    char_counts,
+                    x='Catégorie',
+                    y='Nombre',
+                    title=f'Distribution par {characteristic}',
+                    color='Nombre',
+                    color_continuous_scale=['#0d2c54', '#dc3545']
+                )
+            
+            fig.update_layout(
+                xaxis_title=characteristic.replace("_", " ").title(),
+                yaxis_title='Nombre de donneurs',
+                template='plotly_white'
+            )
+            
+            return fig
