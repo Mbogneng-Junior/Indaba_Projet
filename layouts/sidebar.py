@@ -38,15 +38,6 @@ def create_sidebar():
                     ),
                     dbc.NavLink(
                         [
-                            html.I(className="fas fa-heartbeat me-2"),
-                            "Analyse Sant "
-                        ],
-                        href="/analyse-sante",
-                        active="exact",
-                        className="nav-link"
-                    ),
-                    dbc.NavLink(
-                        [
                             html.I(className="fas fa-check-circle me-2"),
                             "Prédiction Éligibilité"
                         ],
@@ -60,15 +51,6 @@ def create_sidebar():
                             "Rétention Donneurs"
                         ],
                         href="/retention",
-                        active="exact",
-                        className="nav-link"
-                    ),
-                    dbc.NavLink(
-                        [
-                            html.I(className="fas fa-comments me-2"),
-                            "Analyse Feedback"
-                        ],
-                        href="/feedback",
                         active="exact",
                         className="nav-link"
                     ),
