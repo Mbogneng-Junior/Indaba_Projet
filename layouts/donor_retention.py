@@ -1,9 +1,6 @@
 import dash_bootstrap_components as dbc
 from dash import html, dcc
-import plotly.express as px
-import plotly.graph_objects as go
-import pandas as pd
-import os
+from datetime import date
 
 def create_donor_retention_layout():
     """Crée le layout pour la page d'analyse de la fidélisation des donneurs"""
@@ -12,93 +9,98 @@ def create_donor_retention_layout():
             dbc.Col([
                 html.H2("Analyse de la Fidélisation des Donneurs", 
                         className="text-primary mb-4"),
-                html.P("Analyse basée uniquement sur les donneurs ayant déjà effectué au moins un don",
+                html.P("Analyse détaillée des tendances de fidélisation des donneurs",
                       className="text-muted mb-4")
             ])
         ]),
         
-        # Statistiques générales
-        dbc.Row([
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardHeader("Vue d'ensemble de la fidélisation"),
-                    dbc.CardBody([
-                        dbc.Row([
-                            dbc.Col([
-                                html.H4(id="total-previous-donors", className="text-primary"),
-                                html.P("Donneurs avec historique", className="text-muted")
-                            ], width=4),
-                            dbc.Col([
-                                html.H4(id="avg-donations", className="text-success"),
-                                html.P("Moyenne de dons par donneur", className="text-muted")
-                            ], width=4),
-                            dbc.Col([
-                                html.H4(id="retention-rate", className="text-info"),
-                                html.P("Taux de fidélisation", className="text-muted")
-                            ], width=4)
-                        ])
-                    ])
-                ], className="mb-4")
+        # Filtres
+        dbc.Card([
+            dbc.CardBody([
+                dbc.Row([
+                    dbc.Col([
+                        html.Label("Période d'analyse"),
+                        dcc.DatePickerRange(
+                            id='retention-date-range',
+                            start_date=date(2023, 1, 1),
+                            end_date=date(2024, 12, 31),
+                            display_format='DD/MM/YYYY',
+                            className="mb-3"
+                        )
+                    ], md=6),
+                    dbc.Col([
+                        html.Label("Zone géographique"),
+                        dcc.Dropdown(
+                            id='retention-location-filter',
+                            options=[
+                                {'label': 'Toutes les zones', 'value': 'all'},
+                                {'label': 'Douala', 'value': 'douala'},
+                                {'label': 'Yaoundé', 'value': 'yaounde'}
+                            ],
+                            value='all',
+                            className="mb-3"
+                        )
+                    ], md=6)
+                ])
             ])
-        ]),
+        ], className="mb-4"),
         
-        # Analyse croisée des caractéristiques
-        dbc.Row([
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardHeader("Analyse croisée des caractéristiques"),
-                    dbc.CardBody([
-                        dbc.Tabs([
-                            dbc.Tab([
-                                dcc.Graph(id="age-gender-retention")
-                            ], label="Âge × Genre"),
-                            dbc.Tab([
-                                dcc.Graph(id="education-gender-retention")
-                            ], label="Niveau d'études × Genre"),
-                            dbc.Tab([
-                                dcc.Graph(id="location-gender-retention")
-                            ], label="Localisation × Genre"),
-                            dbc.Tab([
-                                dcc.Graph(id="marital-gender-retention")
-                            ], label="Situation matrimoniale × Genre")
-                        ])
-                    ])
-                ], className="mb-4")
-            ])
-        ]),
+        # Statistiques de rétention
+        dbc.Card([
+            dbc.CardHeader("Statistiques de rétention"),
+            dbc.CardBody(id='retention-stats')
+        ], className="mb-4"),
         
-        # Distribution géographique
+        # Graphiques d'analyse
         dbc.Row([
+            # Colonne de gauche
             dbc.Col([
+                # Tendance de rétention
                 dbc.Card([
-                    dbc.CardHeader("Distribution géographique des donneurs fidèles"),
+                    dbc.CardHeader("Évolution du taux de rétention"),
                     dbc.CardBody([
-                        dbc.Tabs([
-                            dbc.Tab([
-                                dcc.Graph(id="city-retention-map")
-                            ], label="Par ville"),
-                            dbc.Tab([
-                                dcc.Graph(id="district-retention-map")
-                            ], label="Par arrondissement"),
-                            dbc.Tab([
-                                dcc.Graph(id="neighborhood-retention-map")
-                            ], label="Par quartier")
-                        ])
+                        dcc.Graph(
+                            id='retention-trend',
+                            config={'displayModeBar': False}
+                        )
                     ])
-                ], className="mb-4")
-            ])
-        ]),
-        
-        # Évolution temporelle
-        dbc.Row([
+                ], className="mb-4"),
+                
+                # Fréquence des dons
+                dbc.Card([
+                    dbc.CardHeader("Fréquence des dons"),
+                    dbc.CardBody([
+                        dcc.Graph(
+                            id='donor-frequency',
+                            config={'displayModeBar': False}
+                        )
+                    ])
+                ])
+            ], md=6),
+            
+            # Colonne de droite
             dbc.Col([
+                # Rétention par âge
                 dbc.Card([
-                    dbc.CardHeader("Évolution de la fidélisation"),
+                    dbc.CardHeader("Rétention par tranche d'âge"),
                     dbc.CardBody([
-                        dcc.Graph(id="retention-timeline")
+                        dcc.Graph(
+                            id='retention-by-age',
+                            config={'displayModeBar': False}
+                        )
                     ])
-                ], className="mb-4")
-            ])
+                ], className="mb-4"),
+                
+                # Rétention par zone
+                dbc.Card([
+                    dbc.CardHeader("Rétention par zone géographique"),
+                    dbc.CardBody([
+                        dcc.Graph(
+                            id='retention-by-location',
+                            config={'displayModeBar': False}
+                        )
+                    ])
+                ])
+            ], md=6)
         ])
-        
-    ], fluid=True, className="py-4")
+    ], fluid=True)

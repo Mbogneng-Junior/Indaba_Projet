@@ -112,7 +112,7 @@ init_donor_profiles_callbacks(app)
 init_campaign_analysis_callbacks(app)
 init_health_analysis_callbacks(app)
 init_eligibility_prediction_callbacks(app)
-init_donor_retention_callbacks(app)
+init_donor_retention_callbacks(app)  
 init_feedback_analysis_callbacks(app)
 
 if __name__ == '__main__':

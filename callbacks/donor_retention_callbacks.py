@@ -6,25 +6,46 @@ import numpy as np
 from datetime import datetime
 import dash_bootstrap_components as dbc
 from dash import html
+import os
 
 def init_donor_retention_callbacks(app):
     """Initialise les callbacks pour l'analyse de la fidélisation des donneurs"""
     
     def load_data():
         """Charge et prépare les données"""
-        df = pd.read_csv('data/processed_data.csv')
-        df['date_de_remplissage'] = pd.to_datetime(df['date_de_remplissage'])
-        
-        # Nettoyage des données de don antérieur
-        df['a_t_il_elle_deja_donne_le_sang'] = df['a_t_il_elle_deja_donne_le_sang'].str.lower()
-        
-        # Conversion de la date du dernier don
-        df['si_oui_preciser_la_date_du_dernier_don'] = pd.to_datetime(
-            df['si_oui_preciser_la_date_du_dernier_don'],
-            errors='coerce'
-        )
-        
-        return df
+        try:
+            # Vérifier si le fichier existe
+            file_path = 'data/processed_data.csv'
+            if not os.path.exists(file_path):
+                print(f"Erreur: Le fichier {file_path} n'existe pas")
+                return None
+                
+            # Charger les données
+            df = pd.read_csv(file_path)
+            if df.empty:
+                print("Erreur: Le fichier de données est vide")
+                return None
+                
+            # Conversion et nettoyage des dates
+            for col in ['date_de_remplissage', 'date_de_naissance', 'si_oui_preciser_la_date_du_dernier_don']:
+                try:
+                    df[col] = pd.to_datetime(df[col], errors='coerce')
+                except Exception as e:
+                    print(f"Erreur lors de la conversion de la colonne {col}: {str(e)}")
+            
+            # Nettoyage des réponses oui/non
+            df['a_t_il_elle_deja_donne_le_sang'] = df['a_t_il_elle_deja_donne_le_sang'].str.lower()
+            
+            # Calcul de l'âge
+            current_year = datetime.now().year
+            df['age'] = df['age'].fillna(current_year - df['date_de_naissance'].dt.year)
+            df['age'] = df['age'].clip(lower=18, upper=100)  # Limiter l'âge entre 18 et 100 ans
+            
+            return df
+            
+        except Exception as e:
+            print(f"Erreur lors du chargement des données: {str(e)}")
+            return None
     
     @app.callback(
         [Output('retention-stats', 'children'),
@@ -38,19 +59,29 @@ def init_donor_retention_callbacks(app):
     )
     def update_retention_analysis(start_date, end_date, location):
         try:
+            # Charger les données
             df = load_data()
+            if df is None:
+                raise ValueError("Impossible de charger les données")
             
             # Appliquer les filtres
+            mask = pd.Series(True, index=df.index)
+            
             if start_date:
-                df = df[df['date_de_remplissage'].dt.date >= pd.to_datetime(start_date).date()]
+                mask &= df['date_de_remplissage'].dt.date >= pd.to_datetime(start_date).date()
             if end_date:
-                df = df[df['date_de_remplissage'].dt.date <= pd.to_datetime(end_date).date()]
+                mask &= df['date_de_remplissage'].dt.date <= pd.to_datetime(end_date).date()
             if location and location != 'all':
-                df = df[df['ville'].str.contains(location, case=False, na=False)]
+                mask &= df['ville'].str.contains(location, case=False, na=False)
+            
+            df = df[mask]
+            
+            if len(df) == 0:
+                raise ValueError("Aucune donnée ne correspond aux filtres sélectionnés")
             
             # 1. Statistiques de rétention
             total_donors = len(df)
-            returning_donors = df['a_t_il_elle_deja_donne_le_sang'].eq('oui').sum()
+            returning_donors = (df['a_t_il_elle_deja_donne_le_sang'] == 'oui').sum()
             retention_rate = (returning_donors / total_donors * 100) if total_donors > 0 else 0
             
             stats = html.Div([
@@ -71,10 +102,9 @@ def init_donor_retention_callbacks(app):
             ])
             
             # 2. Tendance de rétention
-            monthly_stats = df.groupby(df['date_de_remplissage'].dt.to_period('M')).agg({
+            monthly_stats = df.groupby(pd.Grouper(key='date_de_remplissage', freq='M')).agg({
                 'a_t_il_elle_deja_donne_le_sang': lambda x: (x == 'oui').mean() * 100
             }).reset_index()
-            monthly_stats['date_de_remplissage'] = monthly_stats['date_de_remplissage'].astype(str)
             
             trend_fig = px.line(
                 monthly_stats,
@@ -86,23 +116,25 @@ def init_donor_retention_callbacks(app):
                     'a_t_il_elle_deja_donne_le_sang': 'Taux de rétention (%)'
                 }
             )
-            trend_fig.update_layout(showlegend=False)
+            trend_fig.update_layout(
+                showlegend=False,
+                xaxis_title="Période",
+                yaxis_title="Taux de rétention (%)"
+            )
             
             # 3. Fréquence des dons
-            donor_frequency = df[df['a_t_il_elle_deja_donne_le_sang'] == 'oui'].copy()
-            
-            # Calculer l'intervalle entre les dons
-            donor_frequency['temps_depuis_dernier_don'] = (
-                donor_frequency['date_de_remplissage'] - 
-                donor_frequency['si_oui_preciser_la_date_du_dernier_don']
-            ).dt.days
-            
             freq_ranges = [
                 (0, 90, '1-3 mois'),
                 (91, 180, '3-6 mois'),
                 (181, 365, '6-12 mois'),
                 (366, float('inf'), '> 12 mois')
             ]
+            
+            donor_frequency = df[df['a_t_il_elle_deja_donne_le_sang'] == 'oui'].copy()
+            donor_frequency['temps_depuis_dernier_don'] = (
+                donor_frequency['date_de_remplissage'] - 
+                donor_frequency['si_oui_preciser_la_date_du_dernier_don']
+            ).dt.days
             
             donor_frequency['frequence'] = 'Non spécifié'
             for start, end, label in freq_ranges:
@@ -120,15 +152,17 @@ def init_donor_retention_callbacks(app):
                 color='Nombre',
                 color_continuous_scale=['#0d2c54', '#dc3545']
             )
-            freq_fig.update_layout(showlegend=False)
-            
-            # 4. Rétention par âge
-            df['age_group'] = pd.qcut(
-                df['age'].fillna(df['age'].mean()),
-                q=5,
-                labels=['18-25', '26-35', '36-45', '46-55', '56+']
+            freq_fig.update_layout(
+                showlegend=False,
+                xaxis_title="Intervalle entre les dons",
+                yaxis_title="Nombre de donneurs"
             )
             
+            # 4. Rétention par âge
+            age_bins = [0, 25, 35, 45, 55, float('inf')]
+            age_labels = ['18-25', '26-35', '36-45', '46-55', '56+']
+            
+            df['age_group'] = pd.cut(df['age'], bins=age_bins, labels=age_labels)
             age_retention = df.groupby('age_group').agg({
                 'a_t_il_elle_deja_donne_le_sang': lambda x: (x == 'oui').mean() * 100
             }).reset_index()
@@ -143,20 +177,20 @@ def init_donor_retention_callbacks(app):
                 color='Taux de rétention',
                 color_continuous_scale=['#0d2c54', '#dc3545']
             )
-            age_fig.update_layout(showlegend=False)
+            age_fig.update_layout(
+                showlegend=False,
+                xaxis_title="Tranche d'âge",
+                yaxis_title="Taux de rétention (%)"
+            )
             
-            # 5. Rétention par zone géographique
+            # 5. Rétention par zone
             location_retention = df.groupby('arrondissement_de_residence').agg({
                 'a_t_il_elle_deja_donne_le_sang': lambda x: (x == 'oui').mean() * 100
             }).reset_index()
             
             location_retention.columns = ['Zone', 'Taux de rétention']
             location_retention = location_retention.sort_values('Taux de rétention', ascending=True)
-            
-            # Exclure les valeurs non précisées
-            location_retention = location_retention[
-                ~location_retention['Zone'].str.contains('pas précisé', case=False, na=False)
-            ]
+            location_retention = location_retention[~location_retention['Zone'].str.contains('pas précisé', case=False, na=False)]
             
             location_fig = px.bar(
                 location_retention,
@@ -170,7 +204,9 @@ def init_donor_retention_callbacks(app):
             location_fig.update_layout(
                 showlegend=False,
                 height=400,
-                margin=dict(l=0, r=0, t=40, b=0)
+                margin=dict(l=0, r=0, t=40, b=0),
+                xaxis_title="Taux de rétention (%)",
+                yaxis_title="Zone géographique"
             )
             
             return stats, trend_fig, freq_fig, age_fig, location_fig
@@ -179,7 +215,7 @@ def init_donor_retention_callbacks(app):
             print(f"Erreur dans update_retention_analysis: {str(e)}")
             empty_fig = go.Figure()
             empty_fig.add_annotation(
-                text="Erreur lors du chargement des données",
+                text=f"Erreur lors du chargement des données: {str(e)}",
                 xref="paper",
                 yref="paper",
                 x=0.5,
@@ -187,7 +223,7 @@ def init_donor_retention_callbacks(app):
                 showarrow=False
             )
             return (
-                html.Div("Erreur lors du chargement des statistiques"),
+                html.Div(f"Erreur lors du chargement des statistiques: {str(e)}"),
                 empty_fig,
                 empty_fig,
                 empty_fig,
