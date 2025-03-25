@@ -215,7 +215,7 @@ body {
 
 /* Sidebar Styles */
 .sidebar {
-    background-color: #1a1f3c;  
+    background-color: #03055B;  
     min-height: 100vh;
     padding: 2rem 1rem;
     color: white;
@@ -226,15 +226,18 @@ body {
     color: white !important;
     margin-bottom: 0.5rem;
     transition: all 0.3s ease;
+    padding: 0.75rem 1rem;
+    border-radius: 0.25rem;
 }
 
 .sidebar .nav-link:hover {
-    background-color: #dc3545 !important;  
+    background-color: #dc3545 !important;
     color: white !important;
+    transform: translateX(5px);
 }
 
 .sidebar .nav-link.active {
-    background-color: #dc3545 !important;  
+    background-color: #dc3545 !important;
     color: white !important;
 }
 
@@ -294,11 +297,59 @@ body {
 /* Content wrapper for main content */
 .content-wrapper {
     padding: 2rem;
-    width: 100%;
+    /*width: 100%;*/
+    position: relative;
     margin-left: 16rem;
     transition: margin-left 0.3s ease;
     min-height: 100vh;
     background-color: var(--background);
+    overflow-x: hidden;  /* Empêcher le défilement horizontal */
+}
+
+/* Style pour les graphiques */
+.dash-graph {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+/* Style pour les cartes */
+.card {
+    margin-bottom: 1.5rem;
+    overflow: hidden;  /* Empêcher le débordement */
+}
+
+.card-body {
+    padding: 1rem;
+    overflow-x: auto;  /* Permettre le défilement si nécessaire */
+}
+
+/* Style pour les titres de graphiques */
+.dash-graph .gtitle {
+    font-size: 1rem !important;
+    padding-bottom: 0.5rem;
+}
+
+/* Style pour les axes des graphiques */
+.dash-graph .xaxis text,
+.dash-graph .yaxis text {
+    font-size: 0.8rem !important;
+}
+
+/* Style pour l'analyse des clusters */
+.cluster-analysis {
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 1rem;
+}
+
+.cluster-analysis h6 {
+    color: #1a1f3c;
+    margin-top: 1rem;
+}
+
+.cluster-analysis p {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
 }
 
 /* Responsive */
@@ -331,5 +382,17 @@ body {
     
     .filter-card {
         margin-bottom: 1rem;
+    }
+    
+    .content-wrapper {
+        padding: 1rem;
+    }
+    
+    .card-body {
+        padding: 0.5rem;
+    }
+    
+    .dash-graph {
+        height: 300px !important;
     }
 }

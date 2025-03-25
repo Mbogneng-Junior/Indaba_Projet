@@ -39,7 +39,7 @@ def create_sidebar():
                     dbc.NavLink(
                         [
                             html.I(className="fas fa-heartbeat me-2"),
-                            "Analyse Santé"
+                            "Analyse Sant "
                         ],
                         href="/analyse-sante",
                         active="exact",

@@ -1,139 +1,122 @@
 import dash_bootstrap_components as dbc
 from dash import html, dcc
-import plotly.express as px
 
 def create_health_analysis_layout():
-    """Crée le layout pour la page d'analyse de santé et d'éligibilité"""
+    """Crée le layout pour la page d'analyse de santé"""
     return dbc.Container([
-        dbc.Row([
-            dbc.Col([
-                html.H2("🏥 Conditions de Santé & Éligibilité", 
-                       className="text-primary text-center mb-3"),
-                html.P("Analyse des facteurs d'éligibilité et des raisons d'indisponibilité",
-                      className="text-muted text-center mb-4"),
-            ])
-        ]),
-        
-        # Vue d'ensemble de l'éligibilité
-        dbc.Row([
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardHeader("Statut d'éligibilité global"),
-                    dbc.CardBody([
-                        dcc.Graph(
-                            id='eligibility-pie-chart',
-                            figure={}  # Sera mis à jour par le callback
-                        )
-                    ])
-                ], className="shadow-sm mb-4")
-            ], width=6),
-            
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardHeader("Statistiques détaillées"),
-                    dbc.CardBody([
-                        html.Div([
-                            html.H4(id="eligible-count", className="text-success"),
-                            html.P("Individus éligibles", className="text-muted")
-                        ], className="mb-3"),
-                        html.Div([
-                            html.H4(id="temp-unavailable-count", className="text-warning"),
-                            html.P("Temporairement non disponibles", className="text-muted")
-                        ], className="mb-3"),
-                        html.Div([
-                            html.H4(id="non-eligible-count", className="text-danger"),
-                            html.P("Non éligibles", className="text-muted")
+        # Filtres (position fixe, z-index élevé)
+        dbc.Card([
+            dbc.CardBody([
+                dbc.Row([
+                    dbc.Col([
+                        html.H4("Filtres d'analyse", className="card-title mb-3"),
+                        dbc.Row([
+                            dbc.Col([
+                                html.Label("Zone géographique", className="mb-2"),
+                                dcc.Dropdown(
+                                    id='health-location-filter',
+                                    placeholder="Sélectionner une zone",
+                                    className="mb-3",
+                                    style={'zIndex': 9999}
+                                )
+                            ], md=6),
+                            dbc.Col([
+                                html.Label("Période d'analyse", className="mb-2"),
+                                dcc.DatePickerRange(
+                                    id='health-date-range',
+                                    className="mb-3",
+                                    style={'zIndex': 9999}
+                                )
+                            ], md=6)
                         ])
                     ])
-                ], className="shadow-sm mb-4")
-            ], width=6)
-        ]),
+                ])
+            ])
+        ], className="mb-4", style={'position': 'relative', 'zIndex': 1000}),
+
+        # Statistiques détaillées en haut
+        dbc.Card([
+            dbc.CardHeader("Statistiques détaillées"),
+            dbc.CardBody(id='detailed-stats')
+        ], className="mb-4"),
         
-        # Problèmes de santé et raisons d'indisponibilité
+        # Contenu principal
         dbc.Row([
+            # Première colonne (plus petite)
             dbc.Col([
+                # Top 3 problèmes de santé
                 dbc.Card([
                     dbc.CardHeader("Top 3 des problèmes de santé"),
                     dbc.CardBody([
                         dcc.Graph(
                             id='top-health-issues',
-                            figure={}  # Sera mis à jour par le callback
+                            config={'displayModeBar': False}
                         )
                     ])
-                ], className="shadow-sm mb-4")
-            ], width=6),
-            
-            dbc.Col([
+                ], className="mb-4"),
+                
+                # Top 3 raisons d'indisponibilité
                 dbc.Card([
                     dbc.CardHeader("Top 3 des raisons d'indisponibilité"),
                     dbc.CardBody([
                         dcc.Graph(
                             id='top-unavailability-reasons',
-                            figure={}  # Sera mis à jour par le callback
+                            config={'displayModeBar': False}
                         )
                     ])
-                ], className="shadow-sm mb-4")
-            ], width=6)
-        ]),
+                ])
+            ], width=4),
+            
+            # Deuxième colonne (plus grande)
+            dbc.Col([
+                # Raisons d'indisponibilité temporaire
+                dbc.Card([
+                    dbc.CardHeader("Raisons d'indisponibilité temporaire"),
+                    dbc.CardBody([
+                        dcc.Graph(
+                            id='temporary-unavailability-chart',
+                            config={'displayModeBar': False}
+                        )
+                    ])
+                ], className="mb-4"),
+                
+                # Analyse par zone géographique
+                dbc.Card([
+                    dbc.CardHeader("Analyse par zone géographique"),
+                    dbc.CardBody([
+                        dcc.Graph(
+                            id='geographic-health-analysis',
+                            config={'displayModeBar': False}
+                        )
+                    ])
+                ])
+            ], width=8)
+        ], className="mb-4"),
         
-        # Graphiques détaillés
+        # Graphique des problèmes de santé en bas
         dbc.Row([
             dbc.Col([
                 dbc.Card([
                     dbc.CardHeader("Problèmes de santé - Non éligibilité"),
                     dbc.CardBody([
                         dcc.Graph(
-                            id='health-issues-bar',
-                            figure={}  # Sera mis à jour par le callback
+                            id='health-issues-chart',
+                            config={'displayModeBar': False}
                         )
                     ])
-                ], className="shadow-sm mb-4")
-            ], width=12)
-        ]),
+                ])
+            ])
+        ], className="mb-4"),
         
+        # Tableau d'interprétation
         dbc.Row([
             dbc.Col([
                 dbc.Card([
-                    dbc.CardHeader("Raisons d'indisponibilité temporaire"),
+                    dbc.CardHeader("Interprétation des résultats"),
                     dbc.CardBody([
-                        dcc.Graph(
-                            id='temp-unavailability-bar',
-                            figure={}  # Sera mis à jour par le callback
-                        )
+                        html.Div(id='health-interpretation-table')
                     ])
-                ], className="shadow-sm mb-4")
-            ], width=12)
-        ]),
-        
-        # Analyse géographique
-        dbc.Row([
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardHeader("Analyse par zone géographique"),
-                    dbc.CardBody([
-                        dbc.Tabs([
-                            dbc.Tab([
-                                dcc.Graph(
-                                    id='city-analysis',
-                                    figure={}  # Sera mis à jour par le callback
-                                )
-                            ], label="Par ville"),
-                            dbc.Tab([
-                                dcc.Graph(
-                                    id='district-analysis',
-                                    figure={}  # Sera mis à jour par le callback
-                                )
-                            ], label="Par arrondissement"),
-                            dbc.Tab([
-                                dcc.Graph(
-                                    id='neighborhood-analysis',
-                                    figure={}  # Sera mis à jour par le callback
-                                )
-                            ], label="Par quartier")
-                        ])
-                    ])
-                ], className="shadow-sm")
-            ], width=12)
+                ])
+            ])
         ])
-        
-    ], fluid=True, className="px-4 py-3")
+    ], fluid=True)

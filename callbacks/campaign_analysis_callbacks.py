@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 import os
+from dash import html
 
 def init_campaign_analysis_callbacks(app):
     """Initialise les callbacks pour l'analyse des campagnes"""
@@ -20,6 +21,140 @@ def init_campaign_analysis_callbacks(app):
             print("Chemin actuel:", os.getcwd())
             return pd.DataFrame()  # Retourne un DataFrame vide en cas d'erreur
     
+    @app.callback(
+        Output('district-filter', 'options'),
+        [Input('city-filter', 'value')]
+    )
+    def update_district_options(city):
+        df = load_data()
+        if city != 'all':
+            df = df[df['ville'].str.contains(city, case=False, na=False)]
+        districts = df['arrondissement_de_residence'].unique()
+        return [{'label': d, 'value': d} for d in sorted(districts)]
+    
+    @app.callback(
+        Output('neighborhood-filter', 'options'),
+        [Input('city-filter', 'value'),
+         Input('district-filter', 'value')]
+    )
+    def update_neighborhood_options(city, district):
+        df = load_data()
+        if city != 'all':
+            df = df[df['ville'].str.contains(city, case=False, na=False)]
+        if district:
+            df = df[df['arrondissement_de_residence'] == district]
+        neighborhoods = df['quartier_de_residence'].unique()
+        return [{'label': n, 'value': n} for n in sorted(neighborhoods)]
+    
+    @app.callback(
+        [Output('total-donations', 'children'),
+         Output('eligibility-rate', 'children'),
+         Output('total-neighborhoods', 'children'),
+         Output('donations-timeline', 'figure'),
+         Output('eligibility-age-distribution', 'figure')],
+        [Input('city-filter', 'value'),
+         Input('district-filter', 'value'),
+         Input('neighborhood-filter', 'value'),
+         Input('date-range', 'start_date'),
+         Input('date-range', 'end_date')]
+    )
+    def update_campaign_analysis(city, district, neighborhood, start_date, end_date):
+        try:
+            df = load_data()
+            
+            # Appliquer les filtres
+            if city != 'all':
+                df = df[df['ville'].str.contains(city, case=False, na=False)]
+            if district:
+                df = df[df['arrondissement_de_residence'] == district]
+            if neighborhood:
+                df = df[df['quartier_de_residence'] == neighborhood]
+            if start_date:
+                df = df[df['date_de_remplissage'].dt.date >= pd.to_datetime(start_date).date()]
+            if end_date:
+                df = df[df['date_de_remplissage'].dt.date <= pd.to_datetime(end_date).date()]
+            
+            # Calculer les statistiques
+            total_donations = len(df)
+            eligibility_rate = (df['eligibilite_au_don'] == 'eligible').mean()
+            total_neighborhoods = df['quartier_de_residence'].nunique()
+            
+            # 1. Graphique temporel avec meilleure échelle
+            timeline_df = df.groupby('date_de_remplissage').size().reset_index(name='Nombre de dons')
+            timeline_fig = px.line(
+                timeline_df,
+                x='date_de_remplissage',
+                y='Nombre de dons',
+                title="Nombre de dons en fonction de la date de remplissage"
+            )
+            
+            # Améliorer l'échelle et le style
+            timeline_fig.update_layout(
+                xaxis_title="Date",
+                yaxis_title="Nombre de dons",
+                template='plotly_white',
+                yaxis=dict(
+                    rangemode='tozero',
+                    tickformat=',d'
+                ),
+                margin=dict(l=50, r=20, t=40, b=30)
+            )
+            
+            # 2. Distribution de l'éligibilité par âge
+            eligible_df = df[df['eligibilite_au_don'] == 'eligible'].copy()
+            
+            age_bins = list(range(0, 101, 5))
+            age_labels = [f"{i}-{i+4}" for i in range(0, 96, 5)]
+            
+            eligible_df['age_group'] = pd.cut(
+                eligible_df['age'],
+                bins=age_bins,
+                labels=age_labels,
+                include_lowest=True
+            )
+            
+            age_dist = eligible_df.groupby('age_group').size().reset_index(name='Nombre de donneurs éligibles')
+            
+            age_dist_fig = px.bar(
+                age_dist,
+                x='age_group',
+                y='Nombre de donneurs éligibles',
+                title="Distribution des donneurs éligibles par âge",
+                labels={'age_group': 'Groupe d\'âge'}
+            )
+            
+            age_dist_fig.update_layout(
+                template='plotly_white',
+                xaxis_tickangle=-45,
+                bargap=0.1,
+                margin=dict(l=50, r=20, t=40, b=100),
+                yaxis=dict(
+                    rangemode='tozero',
+                    tickformat=',d'
+                )
+            )
+            
+            return (
+                f"{total_donations:,}",
+                f"{eligibility_rate:.1%}",
+                f"{total_neighborhoods:,}",
+                timeline_fig,
+                age_dist_fig
+            )
+            
+        except Exception as e:
+            print(f"Erreur dans update_campaign_analysis: {str(e)}")
+            empty_fig = go.Figure()
+            empty_fig.add_annotation(
+                text="Erreur lors du chargement des données",
+                xref="paper",
+                yref="paper",
+                x=0.5,
+                y=0.5,
+                showarrow=False
+            )
+            return "0", "0%", "0", empty_fig, empty_fig
+
     @app.callback(
         [
             Output('campaign-total-donations', 'children'),
