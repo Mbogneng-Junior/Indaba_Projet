@@ -1,94 +1,147 @@
-# Plateforme de Gestion des Dons de Sang
+# BloodFlow - Application d'Analyse des Dons de Sang
 
-Une application web moderne pour la gestion et l'analyse des dons de sang, développée avec Dash et Python.
+## Description
+BloodFlow est une application web interactive développée avec Dash pour analyser et visualiser les données relatives aux dons de sang. Elle permet de suivre les tendances, prédire l'éligibilité des donneurs et optimiser les campagnes de don.
 
-## 🌟 Fonctionnalités
+## Fonctionnalités
 
 ### 1. Dashboard Principal
 - Vue d'ensemble des statistiques clés
-- Indicateurs de performance en temps réel
-- Navigation intuitive vers toutes les fonctionnalités
-- Design moderne avec thème rouge-bleu
+- Graphiques interactifs des tendances
+- Indicateurs de performance
 
-### 2. Analyse de la Rétention des Donneurs
-- Suivi des taux de fidélisation
-- Analyse par groupe d'âge et profession
-- Cartographie des donneurs par région
-- Identification des facteurs clés de fidélisation
+### 2. Profils Donneurs
+- Analyse démographique des donneurs
+- Segmentation par âge, genre, localisation
+- Visualisation des comportements de don
 
-### 3. Analyse des Retours
-- Analyse des sentiments des donneurs
-- Nuages de mots par catégorie de sentiment
-- Tendances temporelles des retours
-- Tableaux de bord interactifs
-
-### 4. Gestion des Campagnes
+### 3. Analyse des Campagnes
 - Suivi des performances des campagnes
-- Analyse d'impact par région
-- Optimisation des stratégies de collecte
-- Rapports détaillés
+- Analyse géographique des dons
+- Identification des zones à fort potentiel
 
-## 🚀 Installation
+### 4. Prédiction d'Éligibilité
+- Modèle ML pour prédire l'éligibilité
+- Interface intuitive pour les prédictions
+- Explications des résultats
 
-1. Clonez le repository :
+### 5. Analyse de Rétention
+- Taux de rétention des donneurs
+- Analyse des facteurs de fidélisation
+- Recommandations pour améliorer la rétention
+
+## Installation
+
+### Prérequis
+- Python 3.8+
+- pip
+- virtualenv (recommandé)
+
+### Configuration de l'environnement
+
+1. Cloner le dépôt :
 ```bash
-git clone [URL_DU_REPO]
+git clone <url-du-repo>
+cd bloodflow
 ```
 
-2. Installez les dépendances :
+2. Créer et activer l'environnement virtuel :
+```bash
+python -m venv myenv
+source myenv/bin/activate  # Linux/Mac
+myenv\\Scripts\\activate   # Windows
+```
+
+3. Installer les dépendances :
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Lancez l'application :
+## Démarrage de l'Application
+
+### Application Principale (Dash)
 ```bash
 python app.py
 ```
+L'application sera accessible à l'adresse : http://localhost:8050
 
-## 🛠 Technologies Utilisées
+### API de Prédiction (FastAPI)
 
-- **Frontend** : Dash, Bootstrap
-- **Backend** : Python
-- **Analyse de données** : Pandas, NumPy
-- **Visualisation** : Plotly
-- **NLP** : TextBlob
-
-## 📊 Structure du Projet
-
-```
-.
-├── app.py              # Point d'entrée de l'application
-├── assets/            # Fichiers statiques (CSS, images)
-├── callbacks/         # Callbacks Dash pour l'interactivité
-├── layouts/           # Layouts des différentes pages
-├── data/             # Données et scripts de traitement
-├── models/           # Modèles d'analyse
-└── utils/            # Fonctions utilitaires
+1. Naviguer vers le dossier de l'API :
+```bash
+cd api
 ```
 
-## 🎨 Personnalisation
+2. Démarrer l'API :
+```bash
+uvicorn main:app --reload
+```
+L'API sera accessible à l'adresse : http://localhost:8000
 
-L'application utilise un thème personnalisé avec :
-- Dégradé rouge-bleu pour l'identité visuelle
-- Composants interactifs modernes
-- Design responsive
-- Animations fluides
+## Architecture de l'API FastAPI
 
-## 🤝 Contribution
+L'API de prédiction est construite avec FastAPI et suit une architecture RESTful :
 
+### Endpoints
+
+1. Prédiction d'éligibilité :
+```
+POST /predict
+```
+- Entrée : Données du donneur (JSON)
+- Sortie : Prédiction d'éligibilité et probabilité
+
+2. Statut de l'API :
+```
+GET /health
+```
+- Vérifie l'état de l'API
+
+### Structure des Données
+
+Format d'entrée pour la prédiction :
+```json
+{
+    "age": 25,
+    "genre": "Homme",
+    "poids": 70,
+    "dernier_don": "2023-01-01",
+    "antecedents_medicaux": ["aucun"],
+    "medication_actuelle": false
+}
+```
+
+### Modèle ML
+- Utilise un modèle RandomForest pré-entraîné
+- Stocké dans `api/models/model.pkl`
+- Mis à jour périodiquement avec de nouvelles données
+
+## Structure du Projet
+```
+bloodflow/
+├── app.py                 # Application Dash principale
+├── requirements.txt       # Dépendances
+├── api/                   # API FastAPI
+│   ├── main.py           # Point d'entrée API
+│   ├── models/           # Modèles ML
+│   └── schemas.py        # Schémas Pydantic
+├── assets/               # Fichiers statiques
+├── callbacks/           # Callbacks Dash
+├── layouts/            # Layouts des pages
+├── utils/             # Utilitaires
+└── data/              # Données
+```
+
+## Contribution
 1. Fork le projet
-2. Créez votre branche (`git checkout -b feature/AmazingFeature`)
-3. Committez vos changements (`git commit -m 'Add some AmazingFeature'`)
+2. Créer une branche (`git checkout -b feature/AmazingFeature`)
+3. Commit les changements (`git commit -m 'Add AmazingFeature'`)
 4. Push vers la branche (`git push origin feature/AmazingFeature`)
-5. Ouvrez une Pull Request
+5. Ouvrir une Pull Request
 
-## 📝 License
+## Licence
+Distribué sous la licence MIT. Voir `LICENSE` pour plus d'informations.
 
-Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
-
-## 🙏 Remerciements
-
-- Équipe de développement
-- Contributeurs
-- Communauté open-source
-- Partenaires hospitaliers
+## Contact
+Votre Nom - email@example.com
+Lien du projet : https://github.com/votre-username/bloodflow

@@ -7,20 +7,16 @@ from dash.dependencies import Input, Output
 from layouts.home_layout import create_home_layout
 from layouts.donor_profiles import create_donor_profiles_layout
 from layouts.campaign_analysis import create_campaign_analysis_layout
-from layouts.health_analysis import create_health_analysis_layout
 from layouts.eligibility_prediction import create_eligibility_prediction_layout
 from layouts.donor_retention import create_donor_retention_layout
-from layouts.feedback_analysis import create_feedback_analysis_layout
 from layouts.sidebar import create_sidebar
 
 # Importer les callbacks
 from callbacks.home_callbacks import init_home_callbacks
 from callbacks.donor_profiles_callbacks import init_donor_profiles_callbacks
 from callbacks.campaign_analysis_callbacks import init_campaign_analysis_callbacks
-from callbacks.health_analysis_callbacks import init_health_analysis_callbacks
 from callbacks.eligibility_prediction_callbacks import init_eligibility_prediction_callbacks
 from callbacks.donor_retention_callbacks import init_donor_retention_callbacks
-from callbacks.feedback_analysis_callbacks import init_feedback_analysis_callbacks
 
 # Initialiser l'application
 app = dash.Dash(__name__, 
@@ -65,15 +61,6 @@ def display_page(pathname):
             )
         ])
         
-    elif pathname == '/analyse-sante':
-        return html.Div([
-            create_sidebar(),
-            html.Div(
-                create_health_analysis_layout(),
-                className="content-wrapper"
-            )
-        ])
-        
     elif pathname == '/prediction':
         return html.Div([
             create_sidebar(),
@@ -91,29 +78,22 @@ def display_page(pathname):
                 className="content-wrapper"
             )
         ])
-        
-    elif pathname == '/feedback':
-        return html.Div([
-            create_sidebar(),
-            html.Div(
-                create_feedback_analysis_layout(),
-                className="content-wrapper"
-            )
-        ])
     
     # Page 404
     return html.Div([
-        html.H1("404: Page non trouvée", className="text-center mt-5")
+        create_sidebar(),
+        html.Div([
+            html.H1("404: Page non trouvée", className="text-danger"),
+            html.P("La page que vous recherchez n'existe pas.")
+        ], className="content-wrapper")
     ])
 
 # Initialiser les callbacks
 init_home_callbacks(app)
 init_donor_profiles_callbacks(app)
 init_campaign_analysis_callbacks(app)
-init_health_analysis_callbacks(app)
 init_eligibility_prediction_callbacks(app)
-init_donor_retention_callbacks(app)  
-init_feedback_analysis_callbacks(app)
+init_donor_retention_callbacks(app)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
