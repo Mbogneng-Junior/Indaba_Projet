@@ -1,122 +1,177 @@
 import dash_bootstrap_components as dbc
 from dash import html, dcc
-import plotly.express as px
-import plotly.graph_objects as go
-import pandas as pd
+from datetime import date
 
 def create_feedback_analysis_layout():
-    """Crée le layout de la page d'analyse des retours"""
+    """Crée le layout pour la page d'analyse des retours"""
     return dbc.Container([
         dbc.Row([
             dbc.Col([
                 html.H2("Analyse des Retours", 
-                        className="text-primary mb-4")
+                        className="text-primary mb-4"),
+                html.P("Analyse détaillée des retours et de la satisfaction des donneurs",
+                      className="text-muted mb-4")
             ])
         ]),
         
-        # Vue d'ensemble des retours
+        # Filtres
+        dbc.Card([
+            dbc.CardBody([
+                dbc.Row([
+                    dbc.Col([
+                        html.Label("Période d'analyse"),
+                        dcc.DatePickerRange(
+                            id='feedback-date-range',
+                            start_date=date(2019, 1, 1),  # Ajusté pour correspondre aux données
+                            end_date=date(2024, 12, 31),
+                            display_format='DD/MM/YYYY',
+                            className="mb-3"
+                        )
+                    ], md=12)
+                ])
+            ])
+        ], className="mb-4"),
+        
+        # Statistiques générales
         dbc.Row([
             dbc.Col([
                 dbc.Card([
-                    dbc.CardHeader("Distribution des retours"),
+                    dbc.CardHeader("Retours totaux"),
                     dbc.CardBody([
-                        dbc.Row([
-                            dbc.Col([
-                                dcc.Graph(id="feedback-pie-chart")
-                            ], width=6),
-                            dbc.Col([
-                                html.Div([
-                                    html.H4(id="total-feedback", className="text-primary"),
-                                    html.P("Total des retours", className="text-muted")
-                                ], className="mb-3"),
-                                html.Div([
-                                    html.H4(id="positive-feedback", className="text-success"),
-                                    html.P("Retours positifs", className="text-muted")
-                                ], className="mb-3"),
-                                html.Div([
-                                    html.H4(id="negative-feedback", className="text-danger"),
-                                    html.P("Retours négatifs", className="text-muted")
-                                ])
-                            ], width=6)
-                        ])
+                        html.H3(id="total-feedback", className="text-primary text-center"),
+                        dbc.Spinner(color="primary", type="grow", size="sm")
                     ])
-                ], className="mb-4")
-            ])
-        ]),
-        
-        # Analyse des raisons
-        dbc.Row([
+                ])
+            ], md=4),
             dbc.Col([
                 dbc.Card([
-                    dbc.CardHeader("Analyse des raisons"),
+                    dbc.CardHeader("Retours positifs"),
                     dbc.CardBody([
-                        dbc.Tabs([
-                            dbc.Tab([
-                                dcc.Graph(id="other-reasons-analysis")
-                            ], label="Autres raisons"),
-                            dbc.Tab([
-                                dcc.Graph(id="main-reasons-analysis")
-                            ], label="Raisons principales")
-                        ])
+                        html.H3(id="positive-feedback", className="text-success text-center"),
+                        dbc.Spinner(color="success", type="grow", size="sm")
                     ])
-                ], className="mb-4")
-            ])
-        ]),
-        
-        # Analyse par caractéristiques
-        dbc.Row([
+                ])
+            ], md=4),
             dbc.Col([
                 dbc.Card([
-                    dbc.CardHeader("Analyse par caractéristiques"),
+                    dbc.CardHeader("Retours négatifs"),
                     dbc.CardBody([
-                        dbc.Tabs([
-                            dbc.Tab([
-                                dcc.Graph(id="age-feedback-analysis")
-                            ], label="Par âge"),
-                            dbc.Tab([
-                                dcc.Graph(id="gender-feedback-analysis")
-                            ], label="Par genre"),
-                            dbc.Tab([
-                                dcc.Graph(id="education-feedback-analysis")
-                            ], label="Par niveau d'études"),
-                            dbc.Tab([
-                                dcc.Graph(id="location-feedback-analysis")
-                            ], label="Par localisation")
-                        ])
+                        html.H3(id="negative-feedback", className="text-danger text-center"),
+                        dbc.Spinner(color="danger", type="grow", size="sm")
                     ])
-                ], className="mb-4")
-            ])
-        ]),
+                ])
+            ], md=4)
+        ], className="mb-4"),
         
-        # Évolution temporelle
+        # Graphiques d'analyse
         dbc.Row([
+            # Graphique en camembert
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader("Répartition des retours"),
+                    dbc.CardBody([
+                        dbc.Spinner(
+                            dcc.Graph(
+                                id='feedback-pie-chart',
+                                config={'displayModeBar': False}
+                            ),
+                            color="primary",
+                            type="grow",
+                            size="sm"
+                        )
+                    ])
+                ])
+            ], md=6),
+            
+            # Timeline
             dbc.Col([
                 dbc.Card([
                     dbc.CardHeader("Évolution des retours dans le temps"),
                     dbc.CardBody([
-                        dcc.Graph(id="feedback-timeline")
+                        dbc.Spinner(
+                            dcc.Graph(
+                                id='feedback-timeline',
+                                config={'displayModeBar': False}
+                            ),
+                            color="primary",
+                            type="grow",
+                            size="sm"
+                        )
                     ])
-                ], className="mb-4")
-            ])
-        ]),
+                ])
+            ], md=6)
+        ], className="mb-4"),
         
-        # Nuage de mots des commentaires
+        # Analyses croisées
         dbc.Row([
+            # Colonne de gauche
             dbc.Col([
+                # Analyse par âge
                 dbc.Card([
-                    dbc.CardHeader("Analyse des commentaires"),
+                    dbc.CardHeader("Analyse par tranche d'âge"),
                     dbc.CardBody([
-                        dbc.Tabs([
-                            dbc.Tab([
-                                html.Div(id="positive-wordcloud")
-                            ], label="Commentaires positifs"),
-                            dbc.Tab([
-                                html.Div(id="negative-wordcloud")
-                            ], label="Commentaires négatifs")
-                        ])
+                        dbc.Spinner(
+                            dcc.Graph(
+                                id='age-feedback-analysis',
+                                config={'displayModeBar': False}
+                            ),
+                            color="primary",
+                            type="grow",
+                            size="sm"
+                        )
                     ])
-                ], className="mb-4")
-            ])
+                ], className="mb-4"),
+                
+                # Analyse par genre
+                dbc.Card([
+                    dbc.CardHeader("Analyse par genre"),
+                    dbc.CardBody([
+                        dbc.Spinner(
+                            dcc.Graph(
+                                id='gender-feedback-analysis',
+                                config={'displayModeBar': False}
+                            ),
+                            color="primary",
+                            type="grow",
+                            size="sm"
+                        )
+                    ])
+                ])
+            ], md=6),
+            
+            # Colonne de droite
+            dbc.Col([
+                # Analyse par niveau d'études
+                dbc.Card([
+                    dbc.CardHeader("Analyse par niveau d'études"),
+                    dbc.CardBody([
+                        dbc.Spinner(
+                            dcc.Graph(
+                                id='education-feedback-analysis',
+                                config={'displayModeBar': False}
+                            ),
+                            color="primary",
+                            type="grow",
+                            size="sm"
+                        )
+                    ])
+                ], className="mb-4"),
+                
+                # Analyse par localisation
+                dbc.Card([
+                    dbc.CardHeader("Analyse par localisation"),
+                    dbc.CardBody([
+                        dbc.Spinner(
+                            dcc.Graph(
+                                id='location-feedback-analysis',
+                                config={'displayModeBar': False}
+                            ),
+                            color="primary",
+                            type="grow",
+                            size="sm"
+                        )
+                    ])
+                ])
+            ], md=6)
         ])
-        
-    ], fluid=True, className="py-4")
+    ], fluid=True)

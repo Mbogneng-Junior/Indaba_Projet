@@ -15,30 +15,25 @@ def init_donor_retention_callbacks(app):
         """Charge et prépare les données"""
         try:
             # Vérifier si le fichier existe
-            file_path = 'data/processed_data.csv'
+            file_path = os.path.join('data', 'processed_data.csv')
             if not os.path.exists(file_path):
-                print(f"Erreur: Le fichier {file_path} n'existe pas")
-                return None
-                
+                raise FileNotFoundError(f"Le fichier {file_path} n'existe pas")
+            
             # Charger les données
-            df = pd.read_csv(file_path)
+            df = pd.read_csv(file_path, low_memory=False)
             if df.empty:
-                print("Erreur: Le fichier de données est vide")
-                return None
-                
-            # Conversion et nettoyage des dates
-            for col in ['date_de_remplissage', 'date_de_naissance', 'si_oui_preciser_la_date_du_dernier_don']:
-                try:
-                    df[col] = pd.to_datetime(df[col], errors='coerce')
-                except Exception as e:
-                    print(f"Erreur lors de la conversion de la colonne {col}: {str(e)}")
+                raise ValueError("Le fichier de données est vide")
+            
+            # Conversion des dates
+            for col in ['date_de_remplissage', 'si_oui_preciser_la_date_du_dernier_don']:
+                df[col] = pd.to_datetime(df[col], format='%Y-%m-%d', errors='coerce')
             
             # Nettoyage des réponses oui/non
             df['a_t_il_elle_deja_donne_le_sang'] = df['a_t_il_elle_deja_donne_le_sang'].str.lower()
             
             # Calcul de l'âge
-            current_year = datetime.now().year
-            df['age'] = df['age'].fillna(current_year - df['date_de_naissance'].dt.year)
+            df['age'] = pd.to_numeric(df['age'], errors='coerce')
+            df['age'] = df['age'].fillna(30)  # Utiliser la moyenne d'âge comme valeur par défaut
             df['age'] = df['age'].clip(lower=18, upper=100)  # Limiter l'âge entre 18 et 100 ans
             
             return df
@@ -119,7 +114,8 @@ def init_donor_retention_callbacks(app):
             trend_fig.update_layout(
                 showlegend=False,
                 xaxis_title="Période",
-                yaxis_title="Taux de rétention (%)"
+                yaxis_title="Taux de rétention (%)",
+                height=400
             )
             
             # 3. Fréquence des dons
@@ -155,7 +151,8 @@ def init_donor_retention_callbacks(app):
             freq_fig.update_layout(
                 showlegend=False,
                 xaxis_title="Intervalle entre les dons",
-                yaxis_title="Nombre de donneurs"
+                yaxis_title="Nombre de donneurs",
+                height=400
             )
             
             # 4. Rétention par âge
@@ -180,7 +177,8 @@ def init_donor_retention_callbacks(app):
             age_fig.update_layout(
                 showlegend=False,
                 xaxis_title="Tranche d'âge",
-                yaxis_title="Taux de rétention (%)"
+                yaxis_title="Taux de rétention (%)",
+                height=400
             )
             
             # 5. Rétention par zone
@@ -214,13 +212,16 @@ def init_donor_retention_callbacks(app):
         except Exception as e:
             print(f"Erreur dans update_retention_analysis: {str(e)}")
             empty_fig = go.Figure()
-            empty_fig.add_annotation(
-                text=f"Erreur lors du chargement des données: {str(e)}",
-                xref="paper",
-                yref="paper",
-                x=0.5,
-                y=0.5,
-                showarrow=False
+            empty_fig.update_layout(
+                title="Aucune donnée disponible",
+                annotations=[dict(
+                    text=str(e),
+                    xref="paper",
+                    yref="paper",
+                    showarrow=False,
+                    font=dict(size=14)
+                )],
+                height=400
             )
             return (
                 html.Div(f"Erreur lors du chargement des statistiques: {str(e)}"),

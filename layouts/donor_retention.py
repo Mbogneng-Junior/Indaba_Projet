@@ -22,7 +22,7 @@ def create_donor_retention_layout():
                         html.Label("Période d'analyse"),
                         dcc.DatePickerRange(
                             id='retention-date-range',
-                            start_date=date(2023, 1, 1),
+                            start_date=date(2019, 1, 1),  # Ajusté pour correspondre aux données
                             end_date=date(2024, 12, 31),
                             display_format='DD/MM/YYYY',
                             className="mb-3"
@@ -38,7 +38,8 @@ def create_donor_retention_layout():
                                 {'label': 'Yaoundé', 'value': 'yaounde'}
                             ],
                             value='all',
-                            className="mb-3"
+                            className="mb-3",
+                            clearable=False
                         )
                     ], md=6)
                 ])
@@ -48,7 +49,10 @@ def create_donor_retention_layout():
         # Statistiques de rétention
         dbc.Card([
             dbc.CardHeader("Statistiques de rétention"),
-            dbc.CardBody(id='retention-stats')
+            dbc.CardBody([
+                html.Div(id='retention-stats'),
+                dbc.Spinner(color="primary", type="grow", size="sm")
+            ])
         ], className="mb-4"),
         
         # Graphiques d'analyse
@@ -59,9 +63,14 @@ def create_donor_retention_layout():
                 dbc.Card([
                     dbc.CardHeader("Évolution du taux de rétention"),
                     dbc.CardBody([
-                        dcc.Graph(
-                            id='retention-trend',
-                            config={'displayModeBar': False}
+                        dbc.Spinner(
+                            dcc.Graph(
+                                id='retention-trend',
+                                config={'displayModeBar': False}
+                            ),
+                            color="primary",
+                            type="grow",
+                            size="sm"
                         )
                     ])
                 ], className="mb-4"),
@@ -70,9 +79,14 @@ def create_donor_retention_layout():
                 dbc.Card([
                     dbc.CardHeader("Fréquence des dons"),
                     dbc.CardBody([
-                        dcc.Graph(
-                            id='donor-frequency',
-                            config={'displayModeBar': False}
+                        dbc.Spinner(
+                            dcc.Graph(
+                                id='donor-frequency',
+                                config={'displayModeBar': False}
+                            ),
+                            color="primary",
+                            type="grow",
+                            size="sm"
                         )
                     ])
                 ])
@@ -84,9 +98,14 @@ def create_donor_retention_layout():
                 dbc.Card([
                     dbc.CardHeader("Rétention par tranche d'âge"),
                     dbc.CardBody([
-                        dcc.Graph(
-                            id='retention-by-age',
-                            config={'displayModeBar': False}
+                        dbc.Spinner(
+                            dcc.Graph(
+                                id='retention-by-age',
+                                config={'displayModeBar': False}
+                            ),
+                            color="primary",
+                            type="grow",
+                            size="sm"
                         )
                     ])
                 ], className="mb-4"),
@@ -95,9 +114,14 @@ def create_donor_retention_layout():
                 dbc.Card([
                     dbc.CardHeader("Rétention par zone géographique"),
                     dbc.CardBody([
-                        dcc.Graph(
-                            id='retention-by-location',
-                            config={'displayModeBar': False}
+                        dbc.Spinner(
+                            dcc.Graph(
+                                id='retention-by-location',
+                                config={'displayModeBar': False}
+                            ),
+                            color="primary",
+                            type="grow",
+                            size="sm"
                         )
                     ])
                 ])
