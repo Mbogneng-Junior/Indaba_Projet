@@ -15,10 +15,8 @@ logger = logging.getLogger(__name__)
 class EligibilityModel:
     def __init__(self):
         self.model = None
-        self.scaler = StandardScaler()
-        self.label_encoders = {}
-        self.features = ['age', 'genre', 'niveau_d_etude', 'situation_matrimoniale_(sm)',
-                        'profession', 'religion', 'a_t_il_elle_deja_donne_le_sang']
+        self.encoders = {}
+        self.features = None
         
     def preprocess_data(self, df):
         """Prétraitement des données"""
@@ -27,44 +25,27 @@ class EligibilityModel:
         # Copie des données pour éviter la modification de l'original
         df_processed = df.copy()
         
-        # Calcul de l'âge à partir de la date de naissance si nécessaire
-        if 'date_de_naissance' in df_processed.columns and 'age' not in df_processed.columns:
-            logger.info("Calcul de l'âge à partir de la date de naissance")
-            df_processed['date_de_naissance'] = pd.to_datetime(df_processed['date_de_naissance'])
-            df_processed['age'] = (datetime.now() - df_processed['date_de_naissance']).dt.days // 365
-        
-        # Encodage des variables catégorielles
+        # Vérifier que toutes les features nécessaires sont présentes
         for feature in self.features:
             if feature not in df_processed.columns:
-                logger.warning(f"Feature manquante : {feature}")
-                continue
-            
-            logger.info(f"Traitement de la feature : {feature}")
-            if df_processed[feature].dtype == 'object':
-                if feature not in self.label_encoders:
-                    logger.info(f"Création d'un nouvel encodeur pour {feature}")
-                    self.label_encoders[feature] = LabelEncoder()
-                    df_processed[feature] = self.label_encoders[feature].fit_transform(df_processed[feature].fillna('inconnu'))
-                else:
-                    logger.info(f"Utilisation de l'encodeur existant pour {feature}")
-                    # Gérer les nouvelles catégories
-                    known_categories = set(self.label_encoders[feature].classes_)
-                    new_categories = set(df_processed[feature].unique()) - known_categories
-                    if new_categories:
-                        logger.warning(f"Nouvelles catégories trouvées pour {feature}: {new_categories}")
-                        df_processed[feature] = df_processed[feature].map(lambda x: 'inconnu' if x not in known_categories else x)
-                    df_processed[feature] = self.label_encoders[feature].transform(df_processed[feature].fillna('inconnu'))
+                df_processed[feature] = 'inconnu'
         
-        # Standardisation des variables numériques
-        numeric_features = df_processed.select_dtypes(include=['int64', 'float64']).columns
-        if len(numeric_features) > 0:
-            logger.info(f"Standardisation des features numériques : {numeric_features.tolist()}")
-            if not hasattr(self.scaler, 'scale_') or self.scaler.scale_ is None:
-                df_processed[numeric_features] = self.scaler.fit_transform(df_processed[numeric_features])
-            else:
-                df_processed[numeric_features] = self.scaler.transform(df_processed[numeric_features])
+        # Encoder les variables catégorielles
+        for col in df_processed.select_dtypes(include=['object']):
+            if col in self.encoders:
+                # Gérer les nouvelles catégories
+                df_processed[col] = df_processed[col].astype(str)
+                known_categories = set(self.encoders[col].classes_)
+                logger.info(f"Catégories connues pour {col}: {sorted(known_categories)}")
+                logger.info(f"Valeur reçue pour {col}: {df_processed[col].values[0]}")
+                
+                # Si la valeur n'est pas dans les catégories connues, utiliser la première catégorie comme valeur par défaut
+                if df_processed[col].values[0] not in known_categories:
+                    logger.warning(f"Valeur inconnue '{df_processed[col].values[0]}' pour {col}, utilisation de la valeur par défaut '{self.encoders[col].classes_[0]}'")
+                    df_processed[col] = self.encoders[col].classes_[0]
+                
+                df_processed[col] = self.encoders[col].transform(df_processed[col])
         
-        logger.info("Prétraitement terminé")
         return df_processed
     
     def train(self, data_path):
@@ -75,15 +56,29 @@ class EligibilityModel:
         
         # Prétraitement
         logger.info("Préparation des features")
-        X = df[self.features]
+        X = df[['age', 'genre', 'niveau_d_etude', 'situation_matrimoniale_(sm)',
+                'profession', 'religion', 'a_t_il_elle_deja_donne_le_sang']]
         y = (df.iloc[:, 12] == 'eligible').astype(int)
         
-        # Prétraitement des features
-        X_processed = self.preprocess_data(X)
+        # Encodage des variables catégorielles
+        self.features = X.columns.tolist()
+        self.encoders = {}
+        for feature in self.features:
+            if X[feature].dtype == 'object':
+                logger.info(f"Création d'un nouvel encodeur pour {feature}")
+                self.encoders[feature] = LabelEncoder()
+                X[feature] = self.encoders[feature].fit_transform(X[feature].fillna('inconnu'))
+        
+        # Standardisation des variables numériques
+        numeric_features = X.select_dtypes(include=['int64', 'float64']).columns
+        if len(numeric_features) > 0:
+            logger.info(f"Standardisation des features numériques : {numeric_features.tolist()}")
+            scaler = StandardScaler()
+            X[numeric_features] = scaler.fit_transform(X[numeric_features])
         
         # Division train/test
         logger.info("Division train/test")
-        X_train, X_test, y_train, y_test = train_test_split(X_processed, y, test_size=0.2, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
         
         # Entraînement du modèle
         logger.info("Entraînement du modèle")
@@ -109,6 +104,13 @@ class EligibilityModel:
         logger.info(f"Features reçues : {features_dict}")
         df = pd.DataFrame([features_dict])
         
+        # Renommer les colonnes si nécessaire
+        if 'situation_matrimoniale' in df.columns:
+            df = df.rename(columns={'situation_matrimoniale': 'situation_matrimoniale_(sm)'})
+        if 'a_deja_donne' in df.columns:
+            df = df.rename(columns={'a_deja_donne': 'a_t_il_elle_deja_donne_le_sang'})
+            df['a_t_il_elle_deja_donne_le_sang'] = df['a_t_il_elle_deja_donne_le_sang'].map({True: 'oui', False: 'non'})
+        
         # Prétraitement
         logger.info("Prétraitement des features")
         df_processed = self.preprocess_data(df)
@@ -125,7 +127,7 @@ class EligibilityModel:
         logger.info(f"Résultat de la prédiction : {result}")
         
         return result
-    
+        
     def save(self, model_path):
         """Sauvegarde du modèle"""
         if self.model is None:
@@ -137,8 +139,7 @@ class EligibilityModel:
         # Sauvegarde du modèle et des préprocesseurs
         model_data = {
             'model': self.model,
-            'scaler': self.scaler,
-            'label_encoders': self.label_encoders,
+            'encoders': self.encoders,
             'features': self.features
         }
         logger.info(f"Sauvegarde du modèle dans {model_path}")
@@ -149,8 +150,7 @@ class EligibilityModel:
         logger.info(f"Chargement du modèle depuis {model_path}")
         model_data = joblib.load(model_path)
         self.model = model_data['model']
-        self.scaler = model_data['scaler']
-        self.label_encoders = model_data['label_encoders']
+        self.encoders = model_data['encoders']
         self.features = model_data['features']
         logger.info("Modèle chargé avec succès")
 
@@ -174,10 +174,10 @@ if __name__ == '__main__':
         'age': 30,
         'genre': 'Homme',
         'niveau_d_etude': 'Universitaire',
-        'situation_matrimoniale_(sm)': 'Célibataire',
+        'situation_matrimoniale': 'Célibataire',
         'profession': 'Ingénieur',
         'religion': 'chretien (catholique)',
-        'a_t_il_elle_deja_donne_le_sang': 'Non'
+        'a_deja_donne': True
     }
     
     prediction = model.predict(example_donor)

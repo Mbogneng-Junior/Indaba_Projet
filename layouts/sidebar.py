@@ -5,8 +5,8 @@ def create_sidebar():
     """Crée la barre latérale de navigation"""
     return html.Div(
         [
-            html.H2("Menu", className="display-4"),
-            html.Hr(),
+            html.H2("Menu", className="display-4 text-white"),
+            html.Hr(className="text-white"),
             dbc.Nav(
                 [
                     dbc.NavLink(
@@ -16,7 +16,8 @@ def create_sidebar():
                         ],
                         href="/",
                         active="exact",
-                        className="nav-link"
+                        className="nav-link text-white",
+                        style={"--bs-nav-link-hover-color": "#ff0000"}  # Rouge au survol
                     ),
                     dbc.NavLink(
                         [
@@ -25,7 +26,8 @@ def create_sidebar():
                         ],
                         href="/profils",
                         active="exact",
-                        className="nav-link"
+                        className="nav-link text-white",
+                        style={"--bs-nav-link-hover-color": "#ff0000"}
                     ),
                     dbc.NavLink(
                         [
@@ -34,7 +36,8 @@ def create_sidebar():
                         ],
                         href="/analyse-campagnes",
                         active="exact",
-                        className="nav-link"
+                        className="nav-link text-white",
+                        style={"--bs-nav-link-hover-color": "#ff0000"}
                     ),
                     dbc.NavLink(
                         [
@@ -43,7 +46,8 @@ def create_sidebar():
                         ],
                         href="/analyse-sante",
                         active="exact",
-                        className="nav-link"
+                        className="nav-link text-white",
+                        style={"--bs-nav-link-hover-color": "#ff0000"}
                     ),
                     dbc.NavLink(
                         [
@@ -52,16 +56,18 @@ def create_sidebar():
                         ],
                         href="/prediction",
                         active="exact",
-                        className="nav-link"
+                        className="nav-link text-white",
+                        style={"--bs-nav-link-hover-color": "#ff0000"}
                     ),
                     dbc.NavLink(
                         [
-                            html.I(className="fas fa-sync me-2"),
+                            html.I(className="fas fa-redo me-2"),
                             "Rétention Donneurs"
                         ],
                         href="/retention",
                         active="exact",
-                        className="nav-link"
+                        className="nav-link text-white",
+                        style={"--bs-nav-link-hover-color": "#ff0000"}
                     ),
                     dbc.NavLink(
                         [
@@ -70,12 +76,26 @@ def create_sidebar():
                         ],
                         href="/feedback",
                         active="exact",
-                        className="nav-link"
+                        className="nav-link text-white",
+                        style={"--bs-nav-link-hover-color": "#ff0000"}
                     ),
                 ],
                 vertical=True,
                 pills=True,
+                style={
+                    "--bs-nav-pills-link-active-bg": "#ff0000",  # Fond rouge pour le lien actif
+                    "--bs-nav-pills-link-active-color": "#ffffff"  # Texte blanc pour le lien actif
+                }
             ),
         ],
-        className="sidebar",
+        style={
+            "position": "fixed",
+            "top": 0,
+            "left": 0,
+            "bottom": 0,
+            "width": "16rem",
+            "padding": "2rem 1rem",
+            "background": "linear-gradient(180deg, #000080 0%, #000000 100%)",  # Bleu marine vers noir
+            "boxShadow": "2px 0px 5px rgba(0,0,0,0.2)"
+        },
     )

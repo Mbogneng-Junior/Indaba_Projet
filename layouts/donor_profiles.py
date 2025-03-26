@@ -22,7 +22,8 @@ def create_donor_profiles_layout():
                                 dcc.Dropdown(
                                     id='location-filter',
                                     placeholder="Sélectionner un arrondissement",
-                                    className="mb-2"
+                                    className="mb-2",
+                                    style={'zIndex': 9999}
                                 )
                             ], md=4),
                             dbc.Col([

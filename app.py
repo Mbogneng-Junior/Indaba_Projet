@@ -18,7 +18,7 @@ from callbacks.home_callbacks import init_home_callbacks
 from callbacks.donor_profiles_callbacks import init_donor_profiles_callbacks
 from callbacks.campaign_analysis_callbacks import init_campaign_analysis_callbacks
 from callbacks.health_analysis_callbacks import init_health_analysis_callbacks
-from callbacks.eligibility_prediction_callbacks import init_eligibility_prediction_callbacks
+from callbacks.eligibility_prediction_callbacks import init_eligibility_callbacks
 from callbacks.donor_retention_callbacks import init_donor_retention_callbacks
 from callbacks.feedback_analysis_callbacks import init_feedback_analysis_callbacks
 
@@ -43,9 +43,19 @@ app.layout = html.Div([
     [Input('url', 'pathname')]
 )
 def display_page(pathname):
-    if pathname == '/' or pathname == '':
-        # Page d'accueil sans sidebar
-        return create_home_layout()
+    if pathname == '/':
+        return html.Div([
+            create_sidebar(),
+            html.Div(
+                create_home_layout(),
+                className="content-wrapper"
+            )
+        ])
+
+    # if pathname == '/' or pathname == '':
+    #     # Page d'accueil sans sidebar
+        
+    #     return create_home_layout()
         
     elif pathname == '/profils':
         return html.Div([
@@ -115,7 +125,7 @@ init_home_callbacks(app)
 init_donor_profiles_callbacks(app)
 init_campaign_analysis_callbacks(app)
 init_health_analysis_callbacks(app)
-init_eligibility_prediction_callbacks(app)
+init_eligibility_callbacks(app)
 init_donor_retention_callbacks(app)
 init_feedback_analysis_callbacks(app)
 

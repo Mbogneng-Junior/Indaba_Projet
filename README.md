@@ -1,147 +1,161 @@
-# BloodFlow - Application d'Analyse des Dons de Sang
+# Tableau de Bord de Gestion des Dons de Sang
 
-## Description
-BloodFlow est une application web interactive développée avec Dash pour analyser et visualiser les données relatives aux dons de sang. Elle permet de suivre les tendances, prédire l'éligibilité des donneurs et optimiser les campagnes de don.
+Ce projet est un tableau de bord complet pour la gestion et l'analyse des dons de sang au Cameroun, comprenant une interface utilisateur web interactive et une API de prédiction d'éligibilité basée sur l'apprentissage automatique.
 
-## Fonctionnalités
+## 🌟 Fonctionnalités Principales
 
-### 1. Dashboard Principal
-- Vue d'ensemble des statistiques clés
-- Graphiques interactifs des tendances
-- Indicateurs de performance
+### 📊 Dashboard Web
+1. **Profils des Donneurs**
+   - Analyse démographique détaillée (âge, genre, profession)
+   - Segmentation des donneurs par région et niveau d'éducation
+   - Visualisation des tendances de don par période
 
-### 2. Profils Donneurs
-- Analyse démographique des donneurs
-- Segmentation par âge, genre, localisation
-- Visualisation des comportements de don
+2. **Analyse des Campagnes**
+   - Suivi des performances des campagnes de don
+   - Cartographie des zones d'intervention
+   - Statistiques de participation par région
 
-### 3. Analyse des Campagnes
-- Suivi des performances des campagnes
-- Analyse géographique des dons
-- Identification des zones à fort potentiel
+3. **Analyse de Santé**
+   - Suivi des indicateurs de santé des donneurs
+   - Analyse des critères d'éligibilité
+   - Identification des facteurs de risque
 
-### 4. Prédiction d'Éligibilité
-- Modèle ML pour prédire l'éligibilité
-- Interface intuitive pour les prédictions
-- Explications des résultats
+4. **🔮 Prédiction d'Éligibilité**
+   - Modèle ML pour prédire l'éligibilité des donneurs
+   - Interface intuitive pour la saisie des données
+   - Résultats instantanés avec score de confiance
 
-### 5. Analyse de Rétention
-- Taux de rétention des donneurs
-- Analyse des facteurs de fidélisation
-- Recommandations pour améliorer la rétention
+5. **📈 Rétention des Donneurs**
+   - Analyse des taux de retour des donneurs
+   - Identification des facteurs de fidélisation
+   - Suggestions pour améliorer la rétention
 
-## Installation
+6. **💭 Analyse des Retours**
+   - Suivi de la satisfaction des donneurs
+   - Analyse des commentaires et suggestions
+   - Recommandations d'amélioration
 
-### Prérequis
-- Python 3.8+
-- pip
-- virtualenv (recommandé)
+### 🔧 API REST
+- Endpoint de prédiction d'éligibilité
+- Documentation interactive avec Swagger UI
+- Sécurité et validation des données
 
-### Configuration de l'environnement
+## 🚀 Installation
 
-1. Cloner le dépôt :
+1. **Prérequis**
+   - Python 3.8 ou supérieur
+   - pip (gestionnaire de paquets Python)
+   - Git
+
+2. **Cloner le dépôt**
 ```bash
 git clone <url-du-repo>
-cd bloodflow
+cd Indaba-competition
 ```
 
-2. Créer et activer l'environnement virtuel :
+3. **Créer un environnement virtuel**
 ```bash
 python -m venv myenv
 source myenv/bin/activate  # Linux/Mac
-myenv\\Scripts\\activate   # Windows
+# ou
+myenv\Scripts\activate  # Windows
 ```
 
-3. Installer les dépendances :
+4. **Installer les dépendances**
 ```bash
 pip install -r requirements.txt
 ```
 
-## Démarrage de l'Application
+## 🎯 Démarrage
 
-### Application Principale (Dash)
+### 1. Démarrer l'API de Prédiction
+#### a) Entrainer d'abord le model pour le premier lancement
+
+```bash
+cd api
+python3 models/train_model.py
+```
+#### b) Demarrer l'api.
+```bash
+cd api
+uvicorn main:app --reload --port 8000
+```
+L'API sera accessible à :
+- Interface : http://localhost:8000
+- Documentation : http://localhost:8000/docs
+
+### 2. Lancer le Dashboard Web
+Dans un nouveau terminal :
 ```bash
 python app.py
 ```
-L'application sera accessible à l'adresse : http://localhost:8050
+Le dashboard sera accessible à : http://localhost:8050
 
-### API de Prédiction (FastAPI)
-
-1. Naviguer vers le dossier de l'API :
-```bash
-cd api
+## 📁 Structure du Projet
+```
+.
+├── api/                    # API FastAPI
+│   ├── main.py            # Point d'entrée de l'API
+│   └── models/            # Modèles ML
+├── assets/                # Ressources statiques (CSS, images)
+├── callbacks/             # Callbacks Dash pour l'interactivité
+├── data/                  # Données d'entraînement et de test
+├── layouts/              # Composants UI des différentes pages
+├── models/               # Modèles ML et utilitaires
+├── app.py               # Application Dash principale
+└── requirements.txt     # Dépendances Python
 ```
 
-2. Démarrer l'API :
-```bash
-uvicorn main:app --reload
-```
-L'API sera accessible à l'adresse : http://localhost:8000
+## 🛠️ Technologies Utilisées
 
-## Architecture de l'API FastAPI
+- **Frontend**
+  - Dash (Framework Python pour applications web)
+  - Plotly (Visualisations interactives)
+  - Dash Bootstrap Components (UI Components)
 
-L'API de prédiction est construite avec FastAPI et suit une architecture RESTful :
+- **Backend**
+  - FastAPI (API REST)
+  - scikit-learn (Machine Learning)
+  - pandas (Manipulation de données)
+  - NumPy (Calculs numériques)
 
-### Endpoints
+- **Base de données**
+  - SQLite (Stockage local)
+  - pandas (Gestion des données)
 
-1. Prédiction d'éligibilité :
-```
-POST /predict
-```
-- Entrée : Données du donneur (JSON)
-- Sortie : Prédiction d'éligibilité et probabilité
+## 📊 Modèle de Prédiction
 
-2. Statut de l'API :
-```
-GET /health
-```
-- Vérifie l'état de l'API
+Le modèle de prédiction d'éligibilité utilise un Random Forest Classifier entraîné sur des données historiques de dons de sang. Il prend en compte :
+- Données démographiques (âge, genre)
+- Niveau d'éducation
+- Historique médical
+- Antécédents de don
+- Facteurs de risque
 
-### Structure des Données
+Précision du modèle :
+- Score d'entraînement : 99.2%
+- Score de test : 95.1%
 
-Format d'entrée pour la prédiction :
-```json
-{
-    "age": 25,
-    "genre": "Homme",
-    "poids": 70,
-    "dernier_don": "2023-01-01",
-    "antecedents_medicaux": ["aucun"],
-    "medication_actuelle": false
-}
-```
+## 🤝 Contribution
 
-### Modèle ML
-- Utilise un modèle RandomForest pré-entraîné
-- Stocké dans `api/models/model.pkl`
-- Mis à jour périodiquement avec de nouvelles données
+Les contributions sont les bienvenues ! Pour contribuer :
+1. Forkez le projet
+2. Créez une branche pour votre fonctionnalité
+3. Committez vos changements
+4. Poussez vers la branche
+5. Ouvrez une Pull Request
 
-## Structure du Projet
-```
-bloodflow/
-├── app.py                 # Application Dash principale
-├── requirements.txt       # Dépendances
-├── api/                   # API FastAPI
-│   ├── main.py           # Point d'entrée API
-│   ├── models/           # Modèles ML
-│   └── schemas.py        # Schémas Pydantic
-├── assets/               # Fichiers statiques
-├── callbacks/           # Callbacks Dash
-├── layouts/            # Layouts des pages
-├── utils/             # Utilitaires
-└── data/              # Données
-```
+## 📝 License
 
-## Contribution
-1. Fork le projet
-2. Créer une branche (`git checkout -b feature/AmazingFeature`)
-3. Commit les changements (`git commit -m 'Add AmazingFeature'`)
-4. Push vers la branche (`git push origin feature/AmazingFeature`)
-5. Ouvrir une Pull Request
+Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 
-## Licence
-Distribué sous la licence MIT. Voir `LICENSE` pour plus d'informations.
+## 👥 Équipe
 
-## Contact
-Votre Nom - email@example.com
-Lien du projet : https://github.com/votre-username/bloodflow
+- Junior KADJIE - Développeur Principal
+- Équipe Indaba - Supervision et Support
+
+## 📞 Contact
+
+Pour toute question ou suggestion :
+- Email : juniorkadjie@gmail.com
+- GitHub : [votre-profil-github]
