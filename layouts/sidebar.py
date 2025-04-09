@@ -16,8 +16,7 @@ def create_sidebar():
                         ],
                         href="/",
                         active="exact",
-                        className="nav-link text-white",
-                        style={"--bs-nav-link-hover-color": "#ff0000"}  # Rouge au survol
+                        className="nav-link text-white custom-nav-link"
                     ),
                     dbc.NavLink(
                         [
@@ -95,7 +94,10 @@ def create_sidebar():
             "bottom": 0,
             "width": "16rem",
             "padding": "2rem 1rem",
-            "background": "linear-gradient(180deg, #000080 0%, #000000 100%)",  # Bleu marine vers noir
+            "background": "linear-gradient(135deg, var(--secondary-dark), var(--primary-dark))",  
             "boxShadow": "2px 0px 5px rgba(0,0,0,0.2)"
         },
     )
+
+    #linear-gradient(135deg, var(--secondary-dark), var(--primary-dark));
+    #linear-gradient(180deg, #000080 0%, #000000 100%)

@@ -195,6 +195,16 @@ body {
     border: none;
 }
 
+/* Pour assurer que le survol affecte le texte des liens nav */
+.custom-nav-link:hover {
+    color: #ff0000 !important;  /* Changer la couleur du texte au survol */
+}
+
+.nav-link {
+    color: white !important;  /* Assure-toi que la couleur par défaut est blanche */
+}
+
+
 /* Carte des statistiques */
 .stats-card {
     background: var(--white);
