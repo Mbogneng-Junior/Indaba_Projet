@@ -21,9 +21,7 @@ class DonorData(BaseModel):
     niveau_d_etude: str
     situation_matrimoniale: str
     profession: str
-    ville: str = "douala"
-    arrondissement_de_residence: str = "douala 1"
-    nationalite: str = "camerounaise"
+    
     religion: str
     a_deja_donne: bool
     date_dernier_don: Optional[str] = None
@@ -58,9 +56,7 @@ async def predict_eligibility(donor: DonorData):
             'niveau_d_etude': donor.niveau_d_etude,
             'situation_matrimoniale_(sm)': donor.situation_matrimoniale,
             'profession': donor.profession.lower(),
-            'ville': donor.ville.lower(),
-            'arrondissement_de_residence': donor.arrondissement_de_residence.lower(),
-            'nationalite': donor.nationalite.lower(),
+            
             'religion': donor.religion.lower(),
             'a_t_il_elle_deja_donne_le_sang': 'oui' if donor.a_deja_donne else 'non'
         }

@@ -16,7 +16,7 @@ def train_eligibility_model():
     # Sélectionner les features pertinentes
     features = [
         'age', 'genre', 'niveau_d_etude', 'situation_matrimoniale_(sm)',
-        'profession', 'ville', 'arrondissement_de_residence', 'nationalite',
+        'profession',
         'religion', 'a_t_il_elle_deja_donne_le_sang'
     ]
     

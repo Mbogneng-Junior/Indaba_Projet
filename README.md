@@ -91,20 +91,7 @@ python app.py
 ```
 Le dashboard sera accessible à : http://localhost:8050
 
-## 📁 Structure du Projet
-```
-.
-├── api/                    # API FastAPI
-│   ├── main.py            # Point d'entrée de l'API
-│   └── models/            # Modèles ML
-├── assets/                # Ressources statiques (CSS, images)
-├── callbacks/             # Callbacks Dash pour l'interactivité
-├── data/                  # Données d'entraînement et de test
-├── layouts/              # Composants UI des différentes pages
-├── models/               # Modèles ML et utilitaires
-├── app.py               # Application Dash principale
-└── requirements.txt     # Dépendances Python
-```
+
 
 ## 🛠️ Technologies Utilisées
 
@@ -151,11 +138,11 @@ Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 
 ## 👥 Équipe
 
-- Junior KADJIE - Développeur Principal
+- HOPE- Développeur Principal
 - Équipe Indaba - Supervision et Support
 
 ## 📞 Contact
 
 Pour toute question ou suggestion :
-- Email : juniorkadjie@gmail.com
-- GitHub : [votre-profil-github]
+- Email : juniortakos4@gmail.com
+- GitHub : [Junior-Mbogneng]
